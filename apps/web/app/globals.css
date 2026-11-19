@@ -1,50 +1,55 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@import "tailwindcss";
+
+/* Design tokens. Source: DESIGN.md §4. Never hardcode hex colors in components. */
+@theme {
+  /* Font: Inter, loaded in app/layout.tsx via next/font (sets --font-inter) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand blues */
+  --color-brand-950: #162456; /* header start, footer, prices, search button */
+  --color-brand-900: #1c398e; /* header middle, desktop search button, footer divider */
+  --color-brand-800: #193cb8; /* "View All" link */
+  --color-brand-700: #1447e6; /* links, trust icons, active tab, avatar initial */
+  --color-brand-500: #2b7fff; /* header gradient end */
+  --color-brand-300: #8ec5ff; /* copyright on footer */
+  --color-brand-200: #bedbff; /* footer links */
+  --color-brand-100: #dbeafe; /* Popular panel, avatar circle */
+  --color-brand-50: #eff6ff; /* Reviews panel, icon circles, pills */
+
+  /* Gradient stops (mobile top area) */
+  --color-sky-start: #5b9cff;
+  --color-sky-mid: #bbd7ff;
+
+  /* Surfaces */
+  --color-surface: #ffffff; /* cards, nav bar */
+  --color-page: #ffffff; /* page background */
+  --color-well: #f9fafb; /* product image well, certifications band */
+  --color-line: #f3f4f6; /* card / panel borders */
+
+  /* Text */
+  --color-text: #101828; /* headings, titles */
+  --color-body: #4a5565; /* body / review text */
+  --color-muted: #6a7282; /* subtitles */
+  --color-faint: #99a1af; /* MRP, placeholders, hints */
+
+  /* Accents / status */
+  --color-success: #008236; /* "1 DAY" badge text */
+  --color-success-bg: #f0fdf4; /* "1 DAY" badge bg, delivery pill */
+  --color-chat: #00c950; /* floating help button */
+  --color-star: #fdc700; /* rating stars */
+  --color-footer-icon: #ffdf20; /* footer + ORDER NOW icons */
+
+  /* Radius */
+  --radius-card: 12px;
+  --radius-banner: 16px;
+  --radius-pill: 9999px;
+
+  /* Layout */
+  --container-site: 1280px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.imgDark {
-  display: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-
-  .imgLight {
-    display: none;
-  }
-  .imgDark {
-    display: unset;
-  }
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-sans);
 }
