@@ -1,6 +1,7 @@
 import SiteHeader from "../components/Header";
 import HeroCarousel from "../components/heroCarousel";
 import ProductSections from "../components/Products";
+import CertificateSection from "../components/Certificate";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <SiteHeader/>
       <HeroCarousel />
       <ProductSections />
+      <CertificateSection />
     </main>
   );
 }
