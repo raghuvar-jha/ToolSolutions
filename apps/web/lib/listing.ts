@@ -120,7 +120,12 @@ export const getCategory = (slug: string) =>
 
 const byName = new Intl.Collator("en-IN", { sensitivity: "base" });
 
-/** Filter (category, name search, max price) then sort. Recommended = data order. */
+/** Search matches the product name or its category name, ignoring case. */
+const matchesSearch = (p: ListingProduct, q: string) =>
+  p.name.toLowerCase().includes(q) ||
+  (getCategory(p.category)?.name.toLowerCase().includes(q) ?? false);
+
+/** Filter (category, search, max price) then sort. Recommended = data order. */
 export function applyFilters(
   products: ListingProduct[],
   filters: ListingFilters,
@@ -129,7 +134,7 @@ export function applyFilters(
   const result = products.filter(
     (p) =>
       (!filters.category || p.category === filters.category) &&
-      (!q || p.name.toLowerCase().includes(q)) &&
+      (!q || matchesSearch(p, q)) &&
       (filters.max === null || p.price <= filters.max),
   );
 
@@ -151,6 +156,16 @@ export function applyFilters(
 export function deliveryText(days?: number): string | null {
   if (days === undefined || !Number.isFinite(days) || days < 1) return null;
   return `${days} Day Delivery`;
+}
+
+/** Listing heading: search results, else the category name, else "All Products". */
+export function listingTitle(q: string, categoryName?: string | null): string {
+  if (q) {
+    return categoryName
+      ? `Results for “${q}” in ${categoryName}`
+      : `Results for “${q}”`;
+  }
+  return categoryName ?? "All Products";
 }
 
 export const countText = (n: number, one: string, many: string) =>
