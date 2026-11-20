@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronDown, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useRef, useState } from "react";
+import { useCart } from "../lib/cart/cart-context";
 import { formatInr, type ProductDetail } from "../lib/Products";
 import ProductSpecs from "./product-specs";
 import StickyBuyBar from "./sticky-buy-bar";
@@ -28,6 +29,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
   const [variantIndex, setVariantIndex] = useState(firstInStock);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState<string | null>(null);
+  const { addItem } = useCart();
   const buttonsRef = useRef<HTMLDivElement>(null);
 
   const variant = variants[variantIndex];
@@ -190,7 +192,17 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
         <button
           type="button"
           disabled={outOfStock}
-          onClick={() => setAdded(`Added ${qty} × ${itemLabel} to your cart.`)}
+          onClick={() => {
+            // Same variant again: the cart raises its quantity, capped at the stock.
+            const { added: n, inCart } = addItem(product.id, variant?.value ?? null, qty);
+            setAdded(
+              n === 0
+                ? `Your cart already has the maximum available (${inCart}) of ${itemLabel}.`
+                : n < qty
+                  ? `Added ${n} × ${itemLabel}. Your cart now has all ${inCart} in stock.`
+                  : `Added ${n} × ${itemLabel} to your cart.`,
+            );
+          }}
           className={`inline-flex h-12 items-center justify-center gap-2 rounded-pill border border-brand-950 bg-surface text-base font-semibold text-brand-950 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40 lg:order-1 ${FOCUS}`}
         >
           <ShoppingCart aria-hidden className="size-5" />
@@ -199,6 +211,17 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
       </div>
       <p role="status" className="-mt-2 min-h-5 text-sm font-medium text-success">
         {added}
+        {added && (
+          <>
+            {" "}
+            <Link
+              href="/cart"
+              className={`rounded-sm text-brand-700 underline underline-offset-2 hover:text-brand-950 ${FOCUS}`}
+            >
+              View cart
+            </Link>
+          </>
+        )}
       </p>
 
       <StickyBuyBar
