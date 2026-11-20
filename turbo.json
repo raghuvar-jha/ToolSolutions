@@ -5,7 +5,8 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": ["PAYMENT_MODE", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "COD_MAX_AMOUNT"]
     },
     "lint": {
       "dependsOn": ["^lint"]

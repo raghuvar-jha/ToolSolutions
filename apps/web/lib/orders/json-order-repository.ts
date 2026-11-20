@@ -1,9 +1,11 @@
 /**
- * v1 order storage: one JSON file at apps/web/data/orders.json (gitignored).
+ * v1 order storage: one JSON file at apps/web/data/orders.json (gitignored;
+ * a temp folder on Vercel, see ORDERS_FILE).
  * Writes are serialised in-process and written atomically (temp file + rename).
  * Suitable for a single server; replace with a database before scaling out.
  */
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Order, OrderRepository, TransactionResult } from "./order-repository";
 
@@ -59,6 +61,14 @@ class JsonOrderRepository implements OrderRepository {
   }
 }
 
-export const orderRepository: OrderRepository = new JsonOrderRepository(
-  path.join(process.cwd(), "data", "orders.json"),
-);
+/**
+ * Where the file lives. On Vercel the app folder is read-only, so orders go to
+ * the instance's temp folder: checkout works, but orders are lost when the
+ * instance is recycled and are not shared between instances. A database is
+ * needed before taking real orders there.
+ */
+const ORDERS_FILE = process.env.VERCEL
+  ? path.join(tmpdir(), "tools-store", "orders.json")
+  : path.join(process.cwd(), "data", "orders.json");
+
+export const orderRepository: OrderRepository = new JsonOrderRepository(ORDERS_FILE);
