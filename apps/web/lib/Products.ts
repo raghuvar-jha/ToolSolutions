@@ -129,9 +129,9 @@ export function getProductsIn(collection: ProductCollection): Product[] {
   return Products.filter((p) => p.collections.includes(collection));
 }
 
-/** URL of a product's detail page (route not built yet; 404 is expected). */
+/** URL of a product's detail page (homepage Popular / Featured data). */
 export function productHref(product: Pick<Product, "id">): string {
-  return `/product/${encodeURIComponent(product.id)}`;
+  return productPageHref(product.id);
 }
 
 /* ------------------------------------------------------------------ */
@@ -139,6 +139,8 @@ export function productHref(product: Pick<Product, "id">): string {
 /* ------------------------------------------------------------------ */
 
 export type BestSellerProduct = {
+  /** Product ID, used in the product page URL (/products/[id]). Same as PRODUCT_DETAILS ids. */
+  id: string;
   name: string;
   slug: string;
   /** A category slug from lib/categories.ts. */
@@ -153,7 +155,8 @@ export type BestSellerProduct = {
 
 export const BEST_SELLERS: BestSellerProduct[] = [
   {
-    name: "Annular Cutter",
+    id: "pd-005",
+name: "Annular Cutter",
     slug: "annular-cutter",
     category: "cutting-drilling",
     price: 1299,
@@ -162,7 +165,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.annular,
   },
   {
-    name: "Power Drill",
+    id: "pd-001",
+name: "Power Drill",
     slug: "power-drill",
     category: "power-tools",
     price: 3499,
@@ -171,7 +175,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.drill,
   },
   {
-    name: "Digital Micrometer",
+    id: "pd-004",
+name: "Digital Micrometer",
     slug: "digital-micrometer",
     category: "measuring",
     price: 2199,
@@ -180,7 +185,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.micrometer,
   },
   {
-    name: "Angle Grinder",
+    id: "pd-002",
+name: "Angle Grinder",
     slug: "angle-grinder",
     category: "power-tools",
     price: 2799,
@@ -189,7 +195,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.grinder,
   },
   {
-    name: "Core Cutter",
+    id: "pd-006",
+name: "Core Cutter",
     slug: "core-cutter",
     category: "cutting-drilling",
     price: 1899,
@@ -198,7 +205,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.annular,
   },
   {
-    name: "Precision Micrometer",
+    id: "pd-007",
+name: "Precision Micrometer",
     slug: "precision-micrometer",
     category: "measuring",
     price: 2599,
@@ -207,7 +215,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.micrometer,
   },
     {
-    name: "Digital Micrometer",
+    id: "pd-004",
+name: "Digital Micrometer",
     slug: "digital-micrometer",
     category: "measuring",
     price: 2199,
@@ -216,7 +225,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.micrometer,
   },
   {
-    name: "Angle Grinder",
+    id: "pd-002",
+name: "Angle Grinder",
     slug: "angle-grinder",
     category: "power-tools",
     price: 2799,
@@ -225,7 +235,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.grinder,
   },
   {
-    name: "Core Cutter",
+    id: "pd-006",
+name: "Core Cutter",
     slug: "core-cutter",
     category: "cutting-drilling",
     price: 1899,
@@ -234,7 +245,8 @@ export const BEST_SELLERS: BestSellerProduct[] = [
     image: IMG.annular,
   },
   {
-    name: "Precision Micrometer",
+    id: "pd-007",
+name: "Precision Micrometer",
     slug: "precision-micrometer",
     category: "measuring",
     price: 2599,
@@ -244,9 +256,9 @@ export const BEST_SELLERS: BestSellerProduct[] = [
   },
 ];
 
-/** Product detail page URL (route not built yet; a 404 is expected). */
-export const bestSellerHref = (slug: string) =>
-  `/products/${encodeURIComponent(slug)}`;
+/** Product detail page URL: /products/[id]. */
+export const productPageHref = (id: string) =>
+  `/products/${encodeURIComponent(id)}`;
 
 const inr = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -387,7 +399,7 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
     brand: "Tools Solutions",
     price: 4899,
     onSale: false,
-    images: [IMG.drill],
+    images: [IMG.drill,IMG.drill,IMG.drill],
     variants: [],
     stock: 6,
     shortDescription:
@@ -415,7 +427,7 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
     price: 2199,
     originalPrice: 2499,
     onSale: true,
-    images: [IMG.micrometer],
+    images: [IMG.micrometer,IMG.micrometer,IMG.micrometer],
     variants: [],
     stock: 15,
     shortDescription:
@@ -439,8 +451,8 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
   },
 ];
 
-export const getProductBySlug = (slug: string) =>
-  PRODUCT_DETAILS.find((p) => p.slug === slug);
+export const getProductById = (id: string) =>
+  PRODUCT_DETAILS.find((p) => p.id === id);
 
 /** Up to `limit` products from the same category, excluding the product itself. */
 export const getSimilarProducts = (product: ProductDetail, limit = 4) =>
@@ -462,6 +474,7 @@ export const ratingCounts = (reviews: ProductReview[]) =>
 
 /** Shape the shared product card expects (Best Sellers card). */
 export const toCardProduct = (p: ProductDetail): BestSellerProduct => ({
+  id: p.id,
   name: p.name,
   slug: p.slug,
   category: p.category,

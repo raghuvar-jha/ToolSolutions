@@ -57,7 +57,7 @@ export default function CheckoutSummary({
         <h2 id="summary-heading" className="text-lg font-semibold text-text lg:text-xl">
           Order Summary
         </h2>
-        <Link href="/cart" className={`rounded-sm text-sm font-medium text-brand-700 hover:underline ${FOCUS}`}>
+        <Link href="/cart" className={`rounded-sm text-sm text-brand-700 hover:underline ${FOCUS}`}>
           Edit cart
         </Link>
       </div>
@@ -77,10 +77,10 @@ export default function CheckoutSummary({
               )}
               <p className="mt-1 text-sm text-muted">
                 Estimated delivery by{" "}
-                <span className="font-medium text-text">{deliveryBy(item.product.deliveryDays)}</span>
+                <span className="font-semibold text-text">{deliveryBy(item.product.deliveryDays)}</span>
               </p>
               <div className="mt-auto flex items-baseline justify-between gap-3 pt-2">
-                <span className="font-bold text-brand-950">{formatInr(item.unitPrice)}</span>
+                <span className="font-semibold text-brand-950">{formatInr(item.unitPrice)}</span>
                 <span className="text-sm text-muted">
                   Qty: <span className="font-semibold text-text">{item.quantity}</span>
                 </span>
@@ -100,7 +100,7 @@ export default function CheckoutSummary({
           className={`flex w-full items-center justify-between gap-3 rounded-md text-left lg:hidden ${FOCUS}`}
         >
           <span className="font-semibold text-text">Price details</span>
-          <span className="flex items-center gap-2 font-bold text-brand-950">
+          <span className="flex items-center gap-2 font-semibold text-brand-950">
             {formatInr(total)}
             <ChevronDown aria-hidden className={`size-5 text-text transition-transform ${open ? "rotate-180" : ""}`} />
           </span>
@@ -122,7 +122,7 @@ export default function CheckoutSummary({
             ))}
             <div className="flex justify-between gap-4">
               <dt className="text-body">Delivery Charges</dt>
-              <dd className={delivery === "free" ? "font-medium text-success" : "text-muted"}>
+              <dd className={delivery === "free" ? "font-semibold text-success" : "text-muted"}>
                 {delivery === "free" ? "Free Delivery" : "To be confirmed"}
               </dd>
             </div>
@@ -133,13 +133,13 @@ export default function CheckoutSummary({
           </dl>
           <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-line pt-4">
             <span className="text-lg font-semibold text-text">Total Amount</span>
-            <span className="text-lg font-bold text-brand-950">{formatInr(total)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatInr(total)}</span>
           </div>
         </div>
       </div>
 
       {demo && (
-        <p className="mt-3 text-center text-xs font-bold tracking-wide text-brand-700">
+        <p className="mt-3 text-center text-xs tracking-wide text-brand-700">
           DEMO MODE · no real payment is taken
         </p>
       )}

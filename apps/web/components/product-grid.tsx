@@ -65,9 +65,9 @@ export default function ProductGrid({ title, products }: ProductGridProps) {
           {visible.length > 0 ? (
             <ul className="grid grid-cols-2 gap-3 md:grid-cols-5 lg:gap-5">
               {visible.map((p, i) => (
-                // slug + index: stays unique even if two products share a slug,
+                // id + index: stays unique even if two products share an id,
                 // so React never re-uses the wrong card after filtering.
-                <li key={`${p.slug}-${i}`}>
+                <li key={`${p.id}-${i}`}>
                   <ProductCard product={p} />
                 </li>
               ))}

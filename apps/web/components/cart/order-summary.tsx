@@ -69,11 +69,11 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
               <dt className="text-muted">
                 Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
               </dt>
-              <dd className="font-medium text-text">{formatInr(subtotal)}</dd>
+              <dd className="font-semibold text-text">{formatInr(subtotal)}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted">Shipping</dt>
-              <dd className={shipping.kind === "free" ? "font-medium text-success" : "text-text"}>
+              <dd className={shipping.kind === "free" ? "font-semibold text-success" : "text-text"}>
                 {shipping.kind === "free" ? "Free" : "Calculated at checkout"}
               </dd>
             </div>
@@ -86,7 +86,7 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
 
         <div className="flex items-baseline justify-between gap-4 border-t border-line px-4 py-4 lg:px-6 lg:py-5">
           <span className="text-lg font-semibold text-text">Total</span>
-          <span className="text-2xl font-bold text-brand-950">{formatInr(total)}</span>
+          <span className="text-2xl font-semibold text-brand-950">{formatInr(total)}</span>
         </div>
 
         <div className="space-y-3 border-t border-line p-4 lg:p-6">
@@ -105,7 +105,7 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
         <div className="mx-auto flex w-full max-w-site items-center gap-4 px-4 py-3">
           <p className="shrink-0 leading-tight">
             <span className="block text-xs text-muted">Total</span>
-            <span className="block text-lg font-bold text-brand-950">{formatInr(total)}</span>
+            <span className="block text-lg font-semibold text-brand-950">{formatInr(total)}</span>
           </p>
           <Link href={CHECKOUT_HREF} className={PRIMARY_BUTTON}>
             Continue to checkout

@@ -7,23 +7,23 @@ import ProductInfo from "../../../components/product-info";
 import DeliveryBox from "../../../components/delivery-box";
 import ProductReviews from "../../../components/product-reviews";
 import SimilarProducts from "../../../components/similar-products";
-import { PRODUCT_DETAILS, getProductBySlug } from "../../../lib/Products";
+import { PRODUCT_DETAILS, getProductById } from "../../../lib/Products";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { params: Promise<{ id: string }> };
 
-/** Pre-render the known products; unknown slugs still render (not-found state). */
+/** Pre-render the known products; unknown IDs still render (not-found state). */
 export function generateStaticParams() {
-  return PRODUCT_DETAILS.map((p) => ({ slug: p.slug }));
+  return PRODUCT_DETAILS.map((p) => ({ id: p.id }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const { id } = await params;
+  const product = getProductById(id);
   return { title: product ? product.name : "Product not found" };
 }
 
@@ -33,8 +33,8 @@ export async function generateMetadata({
  * reviews and similar products. Mobile: one column in the spec's order.
  */
 export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const { id } = await params;
+  const product = getProductById(id);
 
   return (
     <>

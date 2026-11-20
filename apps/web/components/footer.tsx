@@ -66,7 +66,7 @@ const LINK_GROUPS: LinkGroup[] = [
 const RATING = { score: 4.8, outOf: 5, label: "Customer rating" };
 
 const TRUST_ITEMS: { icon: LucideIcon; top: string; bottom: string }[] = [
-  { icon: Truck, top: "Fast delivery to", bottom: "Noida & NCR" },
+  { icon: Truck, top: "Fast delivery to", bottom: "INDIA" },
   { icon: ShieldCheck, top: "100% secure", bottom: "Checkout" },
   { icon: Headset, top: "Expert", bottom: "Assistance" },
   { icon: BadgeCheck, top: "Genuine", bottom: "Products" },
@@ -217,7 +217,7 @@ function TrustStrip() {
           />
           <p className="text-sm leading-tight text-brand-950 uppercase lg:text-base">
             <span className="block">{top}</span>
-            <span className="block font-bold">{bottom}</span>
+            <span className="block">{bottom}</span>
           </p>
         </li>
       ))}
@@ -252,7 +252,7 @@ function BottomBar() {
           {PAYMENT_METHODS.map(({ label, icon: Icon }) => (
             <li
               key={label}
-              className="flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-sm font-bold text-brand-900 shadow-sm"
+              className="flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-sm text-brand-900 shadow-sm"
             >
               {Icon && <Icon aria-hidden className="size-4" />}
               <span className={label === "VISA" ? "italic" : undefined}>

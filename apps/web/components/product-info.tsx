@@ -48,7 +48,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
     setAdded(null);
   };
 
-  const buyParams = new URLSearchParams({ product: product.slug, qty: String(qty) });
+  const buyParams = new URLSearchParams({ product: product.id, qty: String(qty) });
   if (variant) buyParams.set("option", variant.value);
   const buyHref = `/checkout?${buyParams.toString()}`;
   const itemLabel = variant ? `${product.name} (${variant.value})` : product.name;
@@ -64,7 +64,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
       <div className="-mt-2 lg:-mt-3">
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="sr-only">Price</span>
-          <span className="text-[28px] font-extrabold text-brand-950 lg:text-[32px]">
+          <span className="text-[28px] font-semibold text-brand-950 lg:text-[32px]">
             {formatInr(price)}
           </span>
           {original && (
@@ -102,7 +102,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
       {/* 4. Options */}
       {variants.length > 0 && (
         <fieldset>
-          <legend className="text-sm font-medium text-text">
+          <legend className="text-sm text-text">
             {variants[0]!.name}
           </legend>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -134,7 +134,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
       )}
 
       {/* Stock message */}
-      <p className={`text-sm font-medium ${outOfStock ? "text-muted" : "text-success"}`}>
+      <p className={`text-sm ${outOfStock ? "text-muted" : "text-success"}`}>
         {outOfStock
           ? "Out of stock"
           : stock <= 5
@@ -144,7 +144,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
 
       {/* 5. Quantity */}
       <div className="-mt-2 flex items-center gap-3">
-        <span id="qty-label" className="text-sm font-medium text-text">
+        <span id="qty-label" className="text-sm text-text">
           Quantity
         </span>
         <div role="group" aria-labelledby="qty-label" className="flex items-center gap-3">
@@ -209,7 +209,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
           Add to Cart
         </button>
       </div>
-      <p role="status" className="-mt-2 min-h-5 text-sm font-medium text-success">
+      <p role="status" className="-mt-2 min-h-5 text-sm text-success">
         {added}
         {added && (
           <>

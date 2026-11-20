@@ -57,7 +57,7 @@ export default function CertificateOverlay({
           <div className="mb-4 flex items-start justify-between gap-4">
             <h3
               id="certificate-overlay-title"
-              className="self-center text-lg font-bold tracking-wide text-brand-900 uppercase lg:text-xl"
+              className="self-center text-lg font-semibold tracking-wide text-brand-900 uppercase lg:text-xl"
             >
               {certificate.issuer}
             </h3>

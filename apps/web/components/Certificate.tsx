@@ -31,7 +31,7 @@ export function CertificateSection() {
       <div className={`${CONTAINER} py-8 lg:py-12`}>
         <h2
           id="certifications-heading"
-          className="mb-4 text-[22px] font-extrabold text-text lg:mb-8 lg:text-[28px]"
+          className="mb-4 text-[22px] font-semibold text-text lg:mb-8 lg:text-[28px]"
         >
           Our Certifications
         </h2>

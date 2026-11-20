@@ -12,7 +12,8 @@ export default function Home() {
       <main>
         <SiteHeader/>
         <HeroCarousel />
-        <ProductGrid title="Best Sellers" products={BEST_SELLERS} />
+        <ProductGrid title="BEST SELLER" products={BEST_SELLERS} />
+        
         <CertificatesSection />
       </main>
       <Footer />

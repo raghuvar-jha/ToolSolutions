@@ -48,7 +48,7 @@ const TABS: Tab[] = [
 ];
 
 const ITEM =
-  "flex min-w-11 flex-col items-center gap-1 rounded-md text-[11px] leading-[14px] font-medium";
+  "flex min-w-11 flex-col items-center gap-1 rounded-md text-[11px] leading-[14px]";
 
 export default function MobileTabBar() {
   const pathname = usePathname() ?? "/";

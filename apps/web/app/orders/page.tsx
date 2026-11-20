@@ -71,7 +71,7 @@ export default function OrdersPage() {
       <title>My Orders</title>
       <SiteHeader />
       <main className={`${CONTAINER} py-6 lg:py-10`}>
-        <h1 className="text-2xl font-bold text-text lg:text-[32px]">My Orders</h1>
+        <h1 className="text-2xl font-semibold text-text lg:text-[32px]">My Orders</h1>
         <p className="mt-1 text-[15px] text-muted">Orders placed on this device.</p>
 
         <div className="mt-6" aria-live="polite">
@@ -107,8 +107,8 @@ export default function OrdersPage() {
                       {date.format(new Date(o.createdAt))} · {o.itemCount} {o.itemCount === 1 ? "item" : "items"}
                     </p>
                   </div>
-                  <p className="text-sm font-medium text-body">{statusText(o)}</p>
-                  <p className="w-24 text-right font-bold text-brand-950">{formatInr(o.total)}</p>
+                  <p className="text-sm text-body">{statusText(o)}</p>
+                  <p className="w-24 text-right font-semibold text-brand-950">{formatInr(o.total)}</p>
                   <Link
                     href={`/orders/${o.id}`}
                     className={`inline-flex h-10 items-center rounded-pill border border-brand-950 px-4 text-sm font-semibold text-brand-950 hover:bg-brand-50 ${FOCUS}`}

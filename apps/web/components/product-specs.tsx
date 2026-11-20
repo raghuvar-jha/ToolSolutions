@@ -24,7 +24,7 @@ export default function ProductSpecs({ specs, inBox }: ProductSpecsProps) {
             {rows.map((s) => (
               <div key={s.label} className="grid grid-cols-[2fr_3fr] gap-3 px-3 py-2">
                 <dt className="text-muted">{s.label}</dt>
-                <dd className="font-medium text-text">{s.value}</dd>
+                <dd className="font-semibold text-text">{s.value}</dd>
               </div>
             ))}
           </dl>

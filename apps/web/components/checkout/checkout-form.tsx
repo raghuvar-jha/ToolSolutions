@@ -262,7 +262,7 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
           ref={alertRef}
           role="alert"
           tabIndex={-1}
-          className="mb-6 flex items-start gap-3 rounded-card border border-brand-950 bg-brand-50 px-4 py-3 text-[15px] font-medium text-text focus:outline-none"
+          className="mb-6 flex items-start gap-3 rounded-card border border-brand-950 bg-brand-50 px-4 py-3 text-[15px] text-text focus:outline-none"
         >
           <CircleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-brand-950" />
           <span>{serverError}</span>

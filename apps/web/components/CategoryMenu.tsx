@@ -74,7 +74,7 @@ export default function CategoryMenu({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className={`flex h-11 items-center gap-2 rounded-md text-base font-medium whitespace-nowrap text-text hover:text-brand-700 ${FOCUS}`}
+        className={`flex h-11 items-center gap-2 rounded-md text-base whitespace-nowrap text-text hover:text-brand-700 ${FOCUS}`}
       >
         {withMenuIcon && <Menu aria-hidden className="size-5" />}
         {label}
@@ -97,7 +97,7 @@ export default function CategoryMenu({
               <Link
                 href={categoryHref(slug)}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-text hover:bg-brand-50 hover:text-brand-700 ${FOCUS}`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] text-text hover:bg-brand-50 hover:text-brand-700 ${FOCUS}`}
               >
                 <Icon aria-hidden strokeWidth={1.5} className="size-5 text-brand-700" />
                 {name}

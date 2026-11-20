@@ -43,7 +43,7 @@ export default function ListingPage({ filters }: { filters: ListingFilters }) {
         ) : (
           <>
             <header>
-              <h1 className="text-2xl font-bold text-text lg:text-[32px] lg:leading-tight">
+              <h1 className="text-2xl font-semibold text-text lg:text-[32px] lg:leading-tight">
                 {listingTitle(filters.q, category?.name)}
               </h1>
               <p className="mt-1 text-[15px] text-muted lg:text-base">
@@ -75,7 +75,7 @@ export default function ListingPage({ filters }: { filters: ListingFilters }) {
 function CategoryNotFound() {
   return (
     <section className="mx-auto max-w-md py-16 text-center">
-      <h1 className="text-2xl font-bold text-text lg:text-[32px]">
+      <h1 className="text-2xl font-semibold text-text lg:text-[32px]">
         Category not found
       </h1>
       <p className="mt-3 text-body">

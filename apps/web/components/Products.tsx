@@ -66,7 +66,7 @@ function ProductCard({ product }: { product: Product }) {
           className="object-contain p-5 lg:p-6"
         />
         {product.deliveryBadge && (
-          <span className="absolute top-3 left-3 flex items-center gap-1 rounded-md bg-success-bg px-1.5 py-0.5 text-[11px] font-bold text-success uppercase">
+          <span className="absolute top-3 left-3 flex items-center gap-1 rounded-md bg-success-bg px-1.5 py-0.5 text-[11px] text-success uppercase">
             <Truck aria-hidden className="size-3.5" />
             <span className="sr-only">Delivery in</span>
             {product.deliveryBadge}
@@ -87,7 +87,7 @@ function ProductCard({ product }: { product: Product }) {
 
         <p className="mt-3 flex items-baseline gap-1.5 lg:mt-4">
           <span className="sr-only">Price</span>
-          <span className="text-lg font-extrabold text-brand-950">
+          <span className="text-lg font-semibold text-brand-950">
             {inr.format(product.price)}
           </span>
           {showMrp && (

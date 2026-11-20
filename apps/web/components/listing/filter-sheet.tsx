@@ -46,7 +46,7 @@ export default function FilterSheet({ filters }: { filters: ListingFilters }) {
         type="button"
         onClick={open}
         aria-haspopup="dialog"
-        className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-line bg-surface text-[15px] font-medium text-text shadow-sm lg:hidden ${FOCUS}`}
+        className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-line bg-surface text-[15px] text-text shadow-sm lg:hidden ${FOCUS}`}
       >
         <SlidersHorizontal aria-hidden className="size-4 text-brand-950" />
         Filters

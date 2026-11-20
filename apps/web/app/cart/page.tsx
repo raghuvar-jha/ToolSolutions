@@ -44,14 +44,14 @@ export default function CartPage() {
 
   return (
     <>
-      <title>My Cart</title>
+      <title>MY CART</title>
       <SiteHeader />
       <main className={`${CONTAINER} py-6 lg:py-10`}>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-text lg:text-[32px] lg:leading-tight">My Cart</h1>
+          <h1 className="text-2xl font-semibold text-text lg:text-[32px] lg:leading-tight">My Cart</h1>
           <Link
             href="/products"
-            className={`rounded-sm text-[15px] font-medium text-text hover:text-brand-700 lg:text-base ${FOCUS}`}
+            className={`rounded-sm text-[15px] text-text hover:text-brand-700 lg:text-base ${FOCUS}`}
           >
             Continue Shopping
           </Link>
@@ -112,8 +112,8 @@ export default function CartPage() {
           <div className="mt-12 lg:mt-16">
             {/* Empty cart: still a discovery row, but not "You may also like". */}
             <Recommendations
-              title={hasItems ? "You may also like" : "Popular tools"}
-              excludeSlugs={cart.items.map((i) => i.product.slug)}
+              title={hasItems ? "MORE PRODUCTS" : "Popular tools"}
+              excludeIds={cart.items.map((i) => i.productId)}
               categories={[...new Set(cart.items.map((i) => i.product.category))]}
             />
           </div>

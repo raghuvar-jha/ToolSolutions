@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { deliveryText } from "../lib/listing";
 import {
-  bestSellerHref,
+  productPageHref,
   formatInr,
   type BestSellerProduct,
 } from "../lib/Products";
@@ -45,12 +45,12 @@ export default function ProductCard({
       </div>
 
       <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">
-        <h3 className="truncate text-[15px] font-medium text-text">
+        <h3 className="truncate text-[15px] font-semibold text-text">
           {product.name}
         </h3>
         <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
           <span className="sr-only">Price</span>
-          <span className="text-sm font-bold text-brand-950">
+          <span className="text-sm font-semibold text-brand-950">
             {formatInr(product.price)}
           </span>
           {showOriginal && (
@@ -61,7 +61,7 @@ export default function ProductCard({
           )}
         </p>
         {delivery && (
-          <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-success">
+          <p className="mt-1 flex items-center gap-1 text-[13px] text-success">
             <Check aria-hidden className="size-3.5 shrink-0" />
             {delivery}
           </p>
@@ -72,9 +72,9 @@ export default function ProductCard({
 
         {/* The button is the card's one link; ::after stretches it over the whole card. */}
         <Link
-          href={bestSellerHref(product.slug)}
+          href={productPageHref(product.id)}
           aria-label={`View ${product.name}`}
-          className={`${showDelivery ? "" : "mt-3 "}grid h-8 place-items-center rounded-md bg-surface text-sm font-medium text-text transition-colors after:absolute after:inset-0 after:rounded-card after:content-[''] group-hover:bg-brand-950 group-hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:bg-brand-950 focus-visible:text-surface`}
+          className={`${showDelivery ? "" : "mt-3 "}grid h-8 place-items-center rounded-md bg-surface text-sm text-text transition-colors after:absolute after:inset-0 after:rounded-card after:content-[''] group-hover:bg-brand-950 group-hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:bg-brand-950 focus-visible:text-surface`}
         >
           View Product
         </Link>
