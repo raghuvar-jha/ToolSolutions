@@ -239,10 +239,7 @@ export function HeroCarousel() {
   return (
     <div className={`${CONTAINER} pt-4 lg:pt-6`}>
       {/* Mobile: blank box in place of the mock's seasonal illustration */}
-      <div
-        aria-hidden
-        className="mb-4 aspect-2/1 rounded-xl border border-dashed border-brand-200 bg-brand-50 lg:hidden"
-      />
+      <div />
       <MobileCarousel />
       <DesktopHero />
     </div>
