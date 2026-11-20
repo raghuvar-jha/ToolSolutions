@@ -3,7 +3,8 @@
 import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import {
   Heart,
   LocateFixed,
@@ -81,11 +82,49 @@ function Logo({ className }: { className: string }) {
   );
 }
 
+function SearchInput({
+  isDesktop,
+  defaultValue,
+}: {
+  isDesktop: boolean;
+  defaultValue: string;
+}) {
+  return (
+    <input
+      // New key when the search in the URL changes (back / forward), so the
+      // uncontrolled input shows it.
+      key={defaultValue}
+      type="search"
+      name="q"
+      required
+      defaultValue={defaultValue}
+      aria-label="Search tools"
+      placeholder="Search tools..."
+      enterKeyHint="search"
+      autoComplete="off"
+      className={`h-full min-w-0 flex-1 bg-transparent text-text placeholder:text-faint focus:outline-none ${
+        isDesktop ? "px-4 text-base" : "px-3 text-[15px]"
+      }`}
+    />
+  );
+}
+
+/** On the listing pages, the header box shows the current search (?q=). */
+function CurrentSearchInput({ isDesktop }: { isDesktop: boolean }) {
+  const pathname = usePathname() ?? "/";
+  const params = useSearchParams();
+  const onListing =
+    pathname === "/products" || pathname.startsWith("/category/");
+  const q = onListing ? (params?.get("q") ?? "").trim() : "";
+  return <SearchInput isDesktop={isDesktop} defaultValue={q} />;
+}
+
+/** Header search: always searches all products on the listing page (/products?q=). */
 function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
   const isDesktop = variant === "desktop";
   return (
     <Form
-      action="/search"
+      action="/products"
       role="search"
       className={`flex h-11 min-w-0 flex-1 items-center overflow-hidden bg-surface ${
         isDesktop
@@ -96,20 +135,10 @@ function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
       {!isDesktop && (
         <Search aria-hidden className="ml-3 size-5 shrink-0 text-faint" />
       )}
-      <input
-        type="search"
-        name="q"
-        required
-        aria-label="Search tools"
-        placeholder={
-          isDesktop ? "Search by tool, brand, size or model..." : "Search tools..."
-        }
-        enterKeyHint="search"
-        autoComplete="off"
-        className={`h-full min-w-0 flex-1 bg-transparent text-text placeholder:text-faint focus:outline-none ${
-          isDesktop ? "px-4 text-base" : "px-3 text-[15px]"
-        }`}
-      />
+      {/* useSearchParams needs a Suspense boundary so static pages still pre-render. */}
+      <Suspense fallback={<SearchInput isDesktop={isDesktop} defaultValue="" />}>
+        <CurrentSearchInput isDesktop={isDesktop} />
+      </Suspense>
       <button
         type="submit"
         aria-label="Search"

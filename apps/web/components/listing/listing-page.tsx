@@ -12,6 +12,7 @@ import {
   getCategory,
   hasNarrowingFilters,
   listingHref,
+  listingTitle,
   type ListingFilters,
 } from "../../lib/listing";
 
@@ -43,7 +44,7 @@ export default function ListingPage({ filters }: { filters: ListingFilters }) {
           <>
             <header>
               <h1 className="text-2xl font-bold text-text lg:text-[32px] lg:leading-tight">
-                {category ? category.name : "All Products"}
+                {listingTitle(filters.q, category?.name)}
               </h1>
               <p className="mt-1 text-[15px] text-muted lg:text-base">
                 {countText(count, "product available", "products available")}

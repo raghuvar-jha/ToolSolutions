@@ -209,9 +209,10 @@ Mock: bar 960px wide, row 1 ≈54px, row 2 ≈32px, content inset ≈88px each s
 ### Search bar
 - Desktop: one white bar, ~44px tall, ~500px wide, radius 8px. Three parts:
   1. "All Tools ▾" category select (~100px, right divider)
-  2. `Search` icon + input, placeholder "Search by tool, brand, size or model..."
+  2. `Search` icon + input, placeholder "Search tools..." (search matches product and category names only, so don't promise brand/size/model)
   3. Search button: blue-900 square on the right with a white `Search` icon.
 - Mobile: input ~42px tall, gray-50/white, radius 12px, placeholder "Search tools...", leading gray `Search` icon. Navy (blue-950) square button with radius 10px inside the right end. A separate white **cart pill** (cart icon + count) sits beside it.
+- Both forms submit to `/products?q=<text>` (the listing page, spec 007; plan 008) and always search all products. On `/products` and `/category/*` the box shows the current search.
 
 ### Category strip
 **One category list everywhere** (desktop nav, mobile strip, and later the category pages), defined once in code and shared:
