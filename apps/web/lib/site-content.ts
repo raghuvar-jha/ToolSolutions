@@ -4,7 +4,7 @@
  */
 
 export const CERTIFICATIONS_CONTENT = {
-  heading: "Certification Authorized Dealership",
+  heading: "Certifications",
   subheading:
     "Our certifications and authorisations, shared so you can verify our credentials.",
   viewAllLabel: "Certificates",
