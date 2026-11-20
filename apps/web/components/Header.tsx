@@ -1,41 +1,46 @@
+"use client";
+
 import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Drill,
-  HardHat,
+  Heart,
+  LocateFixed,
   MapPin,
-  Ruler,
+  Phone,
   Search,
   ShoppingCart,
   Truck,
   User,
-  Wrench,
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import CategoryMenu from "./CategoryMenu";
+import { CATEGORIES, categoryHref } from "../lib/categories";
+
+/*
+ * Site header. Layout: DESIGN.md §5 "Header" (desktop, per Navbar.png)
+ * and §6 (mobile).
+ */
 
 /* ------------------------------------------------------------------ */
-/* Data (kept apart from presentation; move to lib/ when it is shared) */
+/* Data                                                                */
 /* ------------------------------------------------------------------ */
 
-type Category = { name: string; slug: string; icon: LucideIcon };
-
-// v1 list from DESIGN.md §5. Final list pending client confirmation (§8).
-const CATEGORIES: Category[] = [
-  { name: "Cutting & Drilling", slug: "cutting-drilling", icon: Drill },
-  { name: "Power Tools", slug: "power-tools", icon: Zap },
-  { name: "Measuring", slug: "measuring", icon: Ruler },
-  { name: "Safety", slug: "safety", icon: HardHat },
-  { name: "Clamping", slug: "clamping", icon: Wrench },
-];
-
-// Hardcoded until cart functionality exists (spec 001).
+// Hardcoded until cart functionality exists.
 const CART_COUNT: number = 0;
+const SAVED_COUNT: number = 0;
 
 // Display-only delivery info (no geolocation in v1).
 const DELIVERY_AREA = "Noida & NCR";
 const DELIVERY_TIME = "1 Day";
+
+// Desktop nav shows this many categories inline; the rest go under "More".
+const VISIBLE_CATEGORIES = 6;
+
+// TODO: switch to a tel: link once the client provides the order phone number.
+const ORDER_NOW_HREF = "/contact";
 
 /* ------------------------------------------------------------------ */
 /* Shared class names                                                  */
@@ -49,11 +54,15 @@ const FOCUS_ON_LIGHT =
 const FOCUS_ON_DARK =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface";
 
+const itemsLabel = (n: number) => `${n} ${n === 1 ? "item" : "items"}`;
+
 /* ------------------------------------------------------------------ */
-/* Pieces                                                              */
+/* Shared pieces                                                       */
 /* ------------------------------------------------------------------ */
 
 function Logo({ className }: { className: string }) {
+  // The PNG has ~20% transparent padding top and bottom, so the visible
+  // mark is ~60% of the rendered height (h-14 ≈ 32px visible, per spec).
   return (
     <Link
       href="/"
@@ -78,13 +87,15 @@ function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
     <Form
       action="/search"
       role="search"
-      className={`flex min-w-0 flex-1 items-center overflow-hidden bg-surface ${
+      className={`flex h-11 min-w-0 flex-1 items-center overflow-hidden bg-surface ${
         isDesktop
-          ? "h-11 max-w-xl rounded-lg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-surface"
-          : "h-11 rounded-card shadow-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-700"
+          ? "max-w-[560px] rounded-lg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-surface"
+          : "rounded-card shadow-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-700"
       }`}
     >
-      <Search aria-hidden className="ml-3 size-5 shrink-0 text-faint" />
+      {!isDesktop && (
+        <Search aria-hidden className="ml-3 size-5 shrink-0 text-faint" />
+      )}
       <input
         type="search"
         name="q"
@@ -95,15 +106,17 @@ function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
         }
         enterKeyHint="search"
         autoComplete="off"
-        className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-text placeholder:text-faint focus:outline-none"
+        className={`h-full min-w-0 flex-1 bg-transparent text-text placeholder:text-faint focus:outline-none ${
+          isDesktop ? "px-4 text-base" : "px-3 text-[15px]"
+        }`}
       />
       <button
         type="submit"
         aria-label="Search"
-        className={`grid shrink-0 place-items-center text-surface ${FOCUS_ON_LIGHT} focus-visible:-outline-offset-4 ${
+        className={`m-1 grid shrink-0 place-items-center ${FOCUS_ON_LIGHT} ${
           isDesktop
-            ? "h-full w-12 bg-brand-900 hover:bg-brand-950"
-            : "m-1 size-9 rounded-lg bg-brand-950 hover:bg-brand-900"
+            ? "h-9 w-11 rounded-md bg-well text-brand-900 hover:bg-brand-50"
+            : "size-9 rounded-lg bg-brand-950 text-surface hover:bg-brand-900"
         }`}
       >
         <Search aria-hidden className="size-5" />
@@ -112,108 +125,139 @@ function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
   );
 }
 
-function CartLink({ variant }: { variant: "desktop" | "mobile" }) {
-  const label = `Cart, ${CART_COUNT} ${CART_COUNT === 1 ? "item" : "items"}`;
+/* ------------------------------------------------------------------ */
+/* Desktop row 1 pieces                                                */
+/* ------------------------------------------------------------------ */
 
-  if (variant === "mobile") {
-    return (
-      <Link
-        href="/cart"
-        aria-label={label}
-        className={`flex h-11 shrink-0 items-center gap-1.5 rounded-card bg-surface px-3 text-text shadow-sm ${FOCUS_ON_LIGHT}`}
-      >
-        <ShoppingCart aria-hidden className="size-5" />
-        <span aria-hidden className="text-base font-semibold">
-          {CART_COUNT}
-        </span>
-      </Link>
-    );
-  }
-
+/** Display-only location pill (no geolocation in v1). */
+function LocationPill() {
   return (
-    <Link
-      href="/cart"
-      aria-label={label}
-      className={`flex items-center gap-2 rounded-md px-1 py-1 font-semibold text-surface hover:text-brand-100 ${FOCUS_ON_DARK}`}
+    <p
+      title={`Delivering to ${DELIVERY_AREA}`}
+      className="flex h-11 w-[150px] shrink-0 items-center gap-2 rounded-lg bg-surface/10 px-3 text-surface"
     >
-      <span className="relative">
-        <ShoppingCart aria-hidden className="size-6" />
-        <span
-          aria-hidden
-          className="absolute -top-2 -left-2 grid min-w-5 place-items-center rounded-pill bg-surface px-1 text-[11px] leading-5 font-bold text-brand-950"
-        >
-          {CART_COUNT}
+      <MapPin aria-hidden className="size-5 shrink-0" />
+      <span className="sr-only">Delivering to</span>
+      <span className="truncate text-base font-medium">{DELIVERY_AREA}</span>
+    </p>
+  );
+}
+
+/** Icon + caption over value (Saved / Account / My cart). */
+function ActionContent({
+  icon: Icon,
+  caption,
+  value,
+}: {
+  icon: LucideIcon;
+  caption: string;
+  value: string;
+}) {
+  return (
+    <>
+      <Icon aria-hidden strokeWidth={1.75} className="size-6 shrink-0" />
+      <span className="leading-tight">
+        <span className="block text-xs text-brand-200">{caption}</span>
+        <span className="block text-base font-medium whitespace-nowrap">
+          {value}
         </span>
       </span>
-      <span aria-hidden>Cart</span>
-    </Link>
+    </>
   );
 }
 
-function AuthLinks({ variant }: { variant: "desktop" | "mobile" }) {
-  const isDesktop = variant === "desktop";
+function HeaderActions() {
   return (
-    <div className="flex shrink-0 items-center gap-2 lg:gap-4">
+    <div className="flex shrink-0 items-center gap-6 text-surface">
+      {/* Display-only in v1: no wishlist or auth yet (DESIGN.md §8 #7). */}
+      <p className="flex items-center gap-2">
+        <ActionContent icon={Heart} caption="Saved" value={itemsLabel(SAVED_COUNT)} />
+      </p>
+      <p className="flex items-center gap-2">
+        <ActionContent icon={User} caption="Account" value="Sign in" />
+      </p>
       <Link
-        href="/login"
-        className={`flex items-center gap-1.5 rounded-md px-1 py-1 font-semibold text-surface hover:text-brand-100 ${
-          isDesktop ? "text-base" : "text-sm"
-        } ${FOCUS_ON_DARK}`}
+        href="/cart"
+        aria-label={`My cart, ${itemsLabel(CART_COUNT)}`}
+        className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
       >
-        <User aria-hidden className={isDesktop ? "size-5" : "size-4"} />
-        Login
-      </Link>
-      <Link
-        href="/register"
-        className={`rounded-lg bg-surface font-semibold text-brand-950 hover:bg-brand-50 ${
-          isDesktop ? "px-5 py-2 text-base" : "px-3 py-1.5 text-sm"
-        } ${FOCUS_ON_DARK}`}
-      >
-        Register
+        <ActionContent
+          icon={ShoppingCart}
+          caption="My cart"
+          value={itemsLabel(CART_COUNT)}
+        />
       </Link>
     </div>
   );
 }
 
-/** Display-only: plain text, not interactive (no geolocation in v1). */
-function DeliveryInfoDesktop() {
+/* ------------------------------------------------------------------ */
+/* Desktop row 2: category nav                                         */
+/* ------------------------------------------------------------------ */
+
+function DesktopCategoryNav() {
+  const visible = CATEGORIES.slice(0, VISIBLE_CATEGORIES);
+  const overflow = CATEGORIES.slice(VISIBLE_CATEGORIES);
+
   return (
-    <div className="hidden shrink-0 items-center gap-5 text-surface xl:flex">
-      <p className="flex items-center gap-2">
-        <MapPin aria-hidden className="size-5 shrink-0" />
-        <span className="leading-tight">
-          <span className="block text-xs text-brand-100">Delivering to</span>
-          <span className="block text-sm font-semibold">{DELIVERY_AREA}</span>
-        </span>
-      </p>
-      <p className="flex items-center gap-2">
-        <Truck aria-hidden className="size-5 shrink-0" />
-        <span className="leading-tight">
-          <span className="block text-xs text-brand-100">Delivery</span>
-          <span className="block text-sm font-semibold">{DELIVERY_TIME}</span>
-        </span>
-      </p>
-    </div>
+    <nav aria-label="Categories" className="flex h-11 items-center gap-6">
+      <CategoryMenu
+        label="All Tools"
+        withMenuIcon
+        footerLink={{ label: "View all tools", href: "/products" }}
+      />
+      <span aria-hidden className="h-6 w-px bg-faint/50" />
+      <ul className="flex min-w-0 items-center gap-8">
+        {visible.map(({ name, slug }) => (
+          <li key={slug}>
+            <Link
+              href={categoryHref(slug)}
+              className={`rounded-md text-base font-medium whitespace-nowrap text-text hover:text-brand-700 ${FOCUS_ON_LIGHT}`}
+            >
+              {name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {overflow.length > 0 && (
+        <CategoryMenu label="More" slugs={overflow.map((c) => c.slug)} />
+      )}
+      <Link
+        href="/deals"
+        className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-md text-base font-semibold text-brand-700 hover:text-brand-800 ${FOCUS_ON_LIGHT}`}
+      >
+        <Zap aria-hidden className="size-5" />
+        Today&apos;s Deals
+      </Link>
+    </nav>
   );
 }
 
-/** Display-only pills for mobile. */
-function DeliveryInfoMobile() {
+/* ------------------------------------------------------------------ */
+/* Mobile pieces (DESIGN.md §6)                                        */
+/* ------------------------------------------------------------------ */
+
+/** Display-only location + delivery pills. */
+function MobileDeliveryRow() {
   return (
     <div className="flex items-stretch gap-2">
-      <p className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-surface/70 px-3 py-2 text-text">
+      <p className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-surface/70 py-1.5 pr-1.5 pl-3 text-text">
         <MapPin aria-hidden className="size-5 shrink-0 text-brand-950" />
-        <span className="min-w-0 leading-tight">
-          <span className="block text-[11px] text-body">Delivering to</span>
-          <span className="block truncate text-sm font-semibold">
-            {DELIVERY_AREA}
-          </span>
+        <span className="sr-only">Delivering to</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {DELIVERY_AREA}
+        </span>
+        <span
+          aria-hidden
+          className="grid size-8 shrink-0 place-items-center rounded-pill bg-brand-950 text-surface"
+        >
+          <LocateFixed className="size-4" />
         </span>
       </p>
-      <p className="flex shrink-0 items-center gap-2 rounded-2xl border border-success-bg bg-success-bg px-3 py-2">
+      <p className="flex shrink-0 items-center gap-2 rounded-2xl bg-success-bg px-3 py-1.5">
         <Truck aria-hidden className="size-5 shrink-0 text-success" />
         <span className="leading-tight">
-          <span className="block text-[11px] text-body">Delivery</span>
+          <span className="block text-[11px] text-muted">Delivery</span>
           <span className="block text-base font-extrabold text-success">
             {DELIVERY_TIME}
           </span>
@@ -223,26 +267,63 @@ function DeliveryInfoMobile() {
   );
 }
 
-/** One category nav for every width: icon strip on mobile, text row on desktop. */
-function CategoryNav() {
+function MobileCartPill() {
+  return (
+    <Link
+      href="/cart"
+      aria-label={`Cart, ${itemsLabel(CART_COUNT)}`}
+      className={`flex h-11 shrink-0 items-center gap-1.5 rounded-card bg-surface px-3 text-text shadow-sm ${FOCUS_ON_LIGHT}`}
+    >
+      <ShoppingCart aria-hidden className="size-5" />
+      <span aria-hidden className="text-base font-semibold">
+        {CART_COUNT}
+      </span>
+    </Link>
+  );
+}
+
+// Mobile strip: a fixed row (no sideways scroll), so at most 5 categories,
+// with short labels that fit a 390px screen. Each short label is the start of
+// the full name, which links keep as their accessible name.
+const MOBILE_CATEGORIES = 5;
+const MOBILE_SHORT_LABELS: Record<string, string> = {
+  "cutting-drilling": "Cutting",
+  "power-tools": "Power",
+  measuring: "Measuring",
+  safety: "Safety",
+  clamping: "Clamping",
+};
+
+function MobileCategoryStrip() {
+  const pathname = usePathname() ?? "/";
+
   return (
     <nav aria-label="Categories">
-      <ul className="-mx-4 flex snap-x gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:justify-between lg:gap-6 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
-        {CATEGORIES.map(({ name, slug, icon: Icon }) => (
-          <li key={slug} className="shrink-0 snap-start">
-            <Link
-              href={`/category/${slug}`}
-              className={`flex min-w-18 flex-col items-center gap-1 rounded-lg px-2 py-2 text-[13px] font-medium whitespace-nowrap text-text hover:bg-surface/60 lg:min-w-0 lg:flex-row lg:px-2 lg:py-4 lg:text-base lg:hover:bg-transparent lg:hover:text-brand-700 ${FOCUS_ON_LIGHT}`}
-            >
-              <Icon
-                aria-hidden
-                strokeWidth={1.5}
-                className="size-7 lg:hidden"
-              />
-              {name}
-            </Link>
-          </li>
-        ))}
+      <ul className="grid grid-cols-5 pb-1">
+        {CATEGORIES.slice(0, MOBILE_CATEGORIES).map(
+          ({ name, slug, icon: Icon }) => {
+            const href = categoryHref(slug);
+            const active =
+              pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <li key={slug} className="flex justify-center">
+                <Link
+                  href={href}
+                  aria-label={name}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-w-14 flex-col items-center gap-1.5 rounded-card border-b-[3px] px-2 pt-1.5 pb-1.5 text-[13px] font-medium whitespace-nowrap text-text transition-colors ${FOCUS_ON_LIGHT} ${
+                    active
+                      ? "border-brand-950 bg-surface/30 inset-shadow-sm inset-shadow-brand-950/15"
+                      : "border-transparent hover:bg-surface/20"
+                  }`}
+                >
+                  <Icon aria-hidden strokeWidth={1.5} className="size-7" />
+                  {MOBILE_SHORT_LABELS[slug] ?? name}
+                </Link>
+              </li>
+            );
+          },
+        )}
       </ul>
     </nav>
   );
@@ -255,39 +336,52 @@ function CategoryNav() {
 export function SiteHeader() {
   return (
     <header>
-      {/* Mobile: brand bar */}
-      <div className="bg-brand-950 lg:hidden">
-        <div className={`${CONTAINER} flex h-14 items-center justify-between gap-3`}>
-          <Logo className="h-11" />
-          <AuthLinks variant="mobile" />
-        </div>
-      </div>
-
-      {/* Desktop: main bar */}
-      <div className="hidden bg-linear-to-r from-brand-950 via-brand-900 to-brand-700 lg:block">
-        <div className={`${CONTAINER} flex h-19 items-center gap-6`}>
-          <Logo className="h-14" />
-          <SearchForm variant="desktop" />
-          <div className="ml-auto flex shrink-0 items-center gap-6">
-            <DeliveryInfoDesktop />
-            <AuthLinks variant="desktop" />
-            <CartLink variant="desktop" />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: delivery, search and categories on the gradient.
-          Desktop: white category bar. */}
-      <div className="bg-linear-to-b from-sky-start via-sky-mid to-surface lg:border-b lg:border-line lg:bg-none lg:bg-surface">
-        <div className={`${CONTAINER} space-y-3 pt-3 lg:space-y-0 lg:pt-0`}>
-          <div className="space-y-3 lg:hidden">
-            <DeliveryInfoMobile />
-            <div className="flex items-center gap-2">
-              <SearchForm variant="mobile" />
-              <CartLink variant="mobile" />
+      {/* ---------- Desktop (lg+) ---------- */}
+      <div className="hidden lg:block">
+        {/* Row 1: main bar */}
+        <div className="bg-linear-to-r from-brand-950 via-brand-900 to-brand-500">
+          <div className={`${CONTAINER} flex h-18 items-center gap-4`}>
+            <Logo className="h-14" />
+            <LocationPill />
+            <SearchForm variant="desktop" />
+            <div className="ml-auto pl-4">
+              <HeaderActions />
             </div>
           </div>
-          <CategoryNav />
+        </div>
+
+        {/* Row 2: category nav */}
+        <div className="relative z-40 border-b border-line bg-surface shadow-sm">
+          <div className={CONTAINER}>
+            <DesktopCategoryNav />
+          </div>
+        </div>
+      </div>
+
+      {/* ---------- Mobile (< lg) ---------- */}
+      <div className="lg:hidden">
+        <div className="bg-brand-950">
+          <div className={`${CONTAINER} flex h-12 items-center justify-between gap-3`}>
+            <Logo className="h-11" />
+            <Link
+              href={ORDER_NOW_HREF}
+              className={`flex shrink-0 items-center gap-1.5 rounded-md text-sm font-semibold text-surface uppercase ${FOCUS_ON_DARK}`}
+            >
+              <Phone aria-hidden className="size-4 text-footer-icon" />
+              Order now
+            </Link>
+          </div>
+        </div>
+
+        <div className="bg-linear-to-b from-sky-start via-sky-mid to-surface">
+          <div className={`${CONTAINER} space-y-3 pt-3`}>
+            <MobileDeliveryRow />
+            <div className="flex items-center gap-2">
+              <SearchForm variant="mobile" />
+              <MobileCartPill />
+            </div>
+            <MobileCategoryStrip />
+          </div>
         </div>
       </div>
     </header>

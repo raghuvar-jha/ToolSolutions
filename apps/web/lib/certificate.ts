@@ -37,4 +37,11 @@ export const certificates: Certificate[] = [
     width: 1962,
     height: 1384,
   },
+  {
+    id: "cert-004",
+    name: "Product Certification",
+    image: "/images/certificates/Certificate-3.png",
+    width: 1962,
+    height: 1384,
+  },
 ];

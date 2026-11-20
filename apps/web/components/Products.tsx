@@ -108,29 +108,7 @@ function ProductCard({ product }: { product: Product }) {
 /* Sections                                                            */
 /* ------------------------------------------------------------------ */
 
-function PopularProducts() {
-  const products = getProductsIn("popular");
-  return (
-    <section
-      aria-labelledby="popular-products"
-      className="rounded-card bg-brand-100 p-3 lg:p-4"
-    >
-      <h2
-        id="popular-products"
-        className="mb-3 text-lg font-semibold text-text lg:mb-4 lg:text-xl"
-      >
-        Popular Products
-      </h2>
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
-        {products.map((p) => (
-          <li key={p.id} className="grid">
-            <ProductCard product={p} />
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
+
 
 function FeaturedProducts() {
   const products = getProductsIn("featured");
@@ -159,7 +137,7 @@ function FeaturedProducts() {
 export function ProductSections() {
   return (
     <div className={`${CONTAINER} space-y-4 py-4 lg:space-y-6 lg:py-6`}>
-      <PopularProducts />
+
       <FeaturedProducts />
     </div>
   );
