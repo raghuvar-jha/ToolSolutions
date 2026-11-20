@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import MobileTabBar from "../components/mobile-tab-bar";
 import { CartProvider } from "../lib/cart/cart-context";
+import { SavedProvider } from "../lib/saved/saved-context";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -33,10 +34,12 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       {/* Mobile: bottom padding so the fixed tab bar never covers content. */}
       <body className="pb-[calc(59px+env(safe-area-inset-bottom))] lg:pb-0">
-        {/* Shared cart state for the header, product page and cart page. */}
+        {/* Shared cart and saved-items state for the header, cards, product page and cart page. */}
         <CartProvider>
-          {children}
-          <MobileTabBar />
+          <SavedProvider>
+            {children}
+            <MobileTabBar />
+          </SavedProvider>
         </CartProvider>
       </body>
     </html>

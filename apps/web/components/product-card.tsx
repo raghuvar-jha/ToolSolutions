@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { deliveryText } from "../lib/listing";
+import SaveButton from "./save-button";
 import {
   productPageHref,
   formatInr,
@@ -42,6 +43,8 @@ export default function ProductCard({
             Sale
           </span>
         )}
+        {/* Above the card's stretched link (z-10), so it saves instead of opening the product. */}
+        <SaveButton productId={product.id} productName={product.name} variant="card" />
       </div>
 
       <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">

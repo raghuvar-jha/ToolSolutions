@@ -55,7 +55,7 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
                 disabled
                 placeholder="Have a promo code?"
                 aria-describedby="promo-note"
-                className="min-w-0 flex-1 cursor-not-allowed bg-transparent placeholder:text-faint"
+                className="w-full min-w-0 flex-1 cursor-not-allowed bg-transparent placeholder:text-faint"
               />
               <ChevronDown aria-hidden className="size-4 shrink-0" />
             </label>

@@ -18,8 +18,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import CategoryMenu from "./CategoryMenu";
+import CountBadge from "./count-badge";
 import { useCart } from "../lib/cart/cart-context";
 import { CATEGORIES, categoryHref } from "../lib/categories";
+import { useSaved } from "../lib/saved/saved-context";
 
 /*
  * Site header. Layout: DESIGN.md §5 "Header" (desktop, per Navbar.png)
@@ -29,9 +31,6 @@ import { CATEGORIES, categoryHref } from "../lib/categories";
 /* ------------------------------------------------------------------ */
 /* Data                                                                */
 /* ------------------------------------------------------------------ */
-
-// Hardcoded until a saved list exists. The cart count is live (useCart).
-const SAVED_COUNT: number = 0;
 
 // Display-only delivery info (no geolocation in v1).
 const DELIVERY_AREA = "INDIA";
@@ -170,19 +169,24 @@ function LocationPill() {
   );
 }
 
-/** Icon + caption over value (Saved / Account / My cart). */
+/** Icon + caption over value (Saved / Account / My cart), with an optional count badge on the icon. */
 function ActionContent({
   icon: Icon,
   caption,
   value,
+  badge,
 }: {
   icon: LucideIcon;
   caption: string;
   value: string;
+  badge?: { count: number; loaded: boolean };
 }) {
   return (
     <>
-      <Icon aria-hidden strokeWidth={1.75} className="size-6 shrink-0" />
+      <span className="relative shrink-0">
+        <Icon aria-hidden strokeWidth={1.75} className="size-6" />
+        {badge && <CountBadge {...badge} />}
+      </span>
       <span className="leading-tight">
         <span className="block text-xs text-brand-200">{caption}</span>
         <span className="block text-base whitespace-nowrap">
@@ -197,30 +201,40 @@ function ActionContent({
 const cartLabel = (n: number) => (n > 0 ? itemsLabel(n) : "empty");
 
 function HeaderActions() {
-  const { itemCount } = useCart();
+  const { itemCount, loaded: cartLoaded } = useCart();
+  const { count: savedCount, loaded: savedLoaded } = useSaved();
   return (
-    <div className="flex shrink-0 items-center gap-6 text-surface">
-      {/* Display-only in v1: no wishlist yet (DESIGN.md §8 #7). */}
-      <p className="flex items-center gap-2">
-        <ActionContent icon={Heart} caption="Saved" value={itemsLabel(SAVED_COUNT)} />
-      </p>
+    <div className="flex shrink-0 items-center gap-7 text-surface">
+      <Link
+        href="/saved"
+        aria-label={`Saved, ${itemsLabel(savedCount)}`}
+        className={`flex items-center gap-3.5 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
+      >
+        <ActionContent
+          icon={Heart}
+          caption="Saved"
+          value={itemsLabel(savedCount)}
+          badge={{ count: savedCount, loaded: savedLoaded }}
+        />
+      </Link>
       {/* Goes to signup until login exists (spec 010). */}
       <Link
         href="/signup"
         aria-label="Account, sign in"
-        className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
+        className={`flex items-center gap-3.5 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
       >
         <ActionContent icon={User} caption="Account" value="Sign in" />
       </Link>
       <Link
         href="/cart"
         aria-label={`MY CART, ${cartLabel(itemCount)}`}
-        className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
+        className={`flex items-center gap-3.5 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
       >
         <ActionContent
           icon={ShoppingCart}
           caption="My cart"
           value={itemCount > 0 ? itemsLabel(itemCount) : "Empty"}
+          badge={{ count: itemCount, loaded: cartLoaded }}
         />
       </Link>
     </div>
@@ -303,20 +317,25 @@ function MobileDeliveryRow() {
   );
 }
 
-function MobileCartPill() {
-  const { itemCount } = useCart();
+const MOBILE_PILL = `relative grid size-11 shrink-0 place-items-center rounded-card bg-surface text-text shadow-sm ${FOCUS_ON_LIGHT}`;
+
+/** Mobile icon pills next to the search box; the badge sits on the pill's corner. */
+function MobileSavedPill() {
+  const { count, loaded } = useSaved();
   return (
-    <Link
-      href="/cart"
-      aria-label={`Cart, ${cartLabel(itemCount)}`}
-      className={`flex h-11 shrink-0 items-center gap-1.5 rounded-card bg-surface px-3 text-text shadow-sm ${FOCUS_ON_LIGHT}`}
-    >
+    <Link href="/saved" aria-label={`Saved, ${itemsLabel(count)}`} className={MOBILE_PILL}>
+      <Heart aria-hidden className="size-5" />
+      <CountBadge count={count} loaded={loaded} hideZero />
+    </Link>
+  );
+}
+
+function MobileCartPill() {
+  const { itemCount, loaded } = useCart();
+  return (
+    <Link href="/cart" aria-label={`Cart, ${cartLabel(itemCount)}`} className={MOBILE_PILL}>
       <ShoppingCart aria-hidden className="size-5" />
-      {itemCount > 0 && (
-        <span aria-hidden className="text-base font-semibold">
-          {itemCount}
-        </span>
-      )}
+      <CountBadge count={itemCount} loaded={loaded} />
     </Link>
   );
 }
@@ -414,9 +433,10 @@ export function SiteHeader() {
 
         <div className="bg-linear-to-b from-sky-start via-sky-mid to-surface">
           <div className={`${CONTAINER} space-y-3 pt-3`}>
-            <MobileDeliveryRow />
+           
             <div className="flex items-center gap-2">
               <SearchForm variant="mobile" />
+              <MobileSavedPill />
               <MobileCartPill />
             </div>
             <MobileCategoryStrip />

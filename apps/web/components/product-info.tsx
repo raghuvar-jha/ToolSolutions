@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { useCart } from "../lib/cart/cart-context";
 import { formatInr, type ProductDetail } from "../lib/Products";
 import ProductSpecs from "./product-specs";
+import SaveButton from "./save-button";
 import StickyBuyBar from "./sticky-buy-bar";
 
 const FOCUS =
@@ -55,10 +56,13 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
 
   return (
     <div className="space-y-5 lg:space-y-6">
-      {/* 1. Name */}
-      <h1 className="text-2xl font-semibold text-text lg:text-[32px] lg:leading-tight">
-        {product.name}
-      </h1>
+      {/* 1. Name + save */}
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-semibold text-text lg:text-[32px] lg:leading-tight">
+          {product.name}
+        </h1>
+        <SaveButton productId={product.id} productName={product.name} variant="page" />
+      </div>
 
       {/* 2. Price */}
       <div className="-mt-2 lg:-mt-3">

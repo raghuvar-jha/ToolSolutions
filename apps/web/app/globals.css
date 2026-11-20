@@ -38,6 +38,15 @@
   --color-chat: #00c950; /* floating help button */
   --color-star: #fdc700; /* rating stars */
   --color-footer-icon: #ffdf20; /* footer + ORDER NOW icons */
+  --color-badge: #53eafd; /* header cart / saved count badge (text: brand-950) */
+
+  /* Header count badge: short pop when the count goes up */
+  --animate-badge-pop: badge-pop 450ms ease-out;
+  @keyframes badge-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+  }
 
   /* Radius */
   --radius-card: 12px;

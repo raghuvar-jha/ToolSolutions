@@ -83,7 +83,8 @@ export default function CartPage() {
               <div className="h-40 animate-pulse rounded-card bg-well motion-reduce:animate-none" />
             </div>
           ) : hasItems ? (
-            <div className="grid gap-6 lg:grid-cols-[61fr_39fr] lg:items-start">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,61fr)_minmax(0,39fr)] lg:items-start">
+              {/* grid-cols-1 = minmax(0, 1fr): a wide child can never push the page past the screen. */}
               <ul className="space-y-4">
                 {cart.items.map((item) => (
                   <li key={item.lineId}>
