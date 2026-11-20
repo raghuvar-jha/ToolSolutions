@@ -15,7 +15,7 @@
     "@repo/ui": "*",
     "@tailwindcss/postcss": "^4.3.5",
     "lucide-react": "1.68.0",
-    "next": "16.3.8",
+    "next": "16.4.6",
     "postcss": "^8.5.33",
     "react": "19.2.8",
     "react-dom": "19.2.8",
