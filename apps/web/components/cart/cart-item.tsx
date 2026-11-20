@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CircleAlert, Heart, RotateCcw, Trash2, Truck } from "lucide-react";
 import type { CartItem as CartItemData } from "../../lib/cart/cart-context";
-import { bestSellerHref, formatInr } from "../../lib/Products";
+import { formatInr, productPageHref } from "../../lib/Products";
 import { DELIVERY_WINDOW_DAYS } from "../../lib/shipping";
 import QuantityStepper from "./quantity-stepper";
 
@@ -37,7 +37,7 @@ type CartItemProps = {
  */
 export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) {
   const { product, variant, quantity, unitPrice, lineTotal, stock } = item;
-  const href = bestSellerHref(product.slug);
+  const href = productPageHref(product.id);
   // Not in the data yet; the line stays hidden until it is.
   const returnDays = (product as { returnDays?: number }).returnDays;
 
@@ -87,7 +87,7 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
         </div>
 
         {stock <= LOW_STOCK && (
-          <p className="mt-3 flex items-center gap-2 rounded-md bg-star/15 px-3 py-2 text-sm font-medium text-text">
+          <p className="mt-3 flex items-center gap-2 rounded-md bg-star/15 px-3 py-2 text-sm text-text">
             <CircleAlert aria-hidden className="size-4 shrink-0" />
             Only {stock} left in stock
           </p>
@@ -108,7 +108,7 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
           <p className="flex min-w-32 flex-wrap items-baseline gap-x-2">
-            <span className="text-lg font-bold text-brand-950">{formatInr(lineTotal)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatInr(lineTotal)}</span>
             {quantity > 1 && (
               <span className="text-sm text-muted">{formatInr(unitPrice)} each</span>
             )}

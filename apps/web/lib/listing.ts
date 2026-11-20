@@ -14,24 +14,24 @@ import {
 export type ListingProduct = BestSellerProduct & { deliveryDays?: number };
 
 /**
- * Every product in lib/Products.ts once (BEST_SELLERS repeats some slugs),
+ * Every product in lib/Products.ts once (BEST_SELLERS repeats some IDs),
  * in data order. deliveryDays comes only from the product-page data, so
  * products without it never show a delivery time.
  */
 export const LISTING_PRODUCTS: ListingProduct[] = (() => {
-  const details = new Map(PRODUCT_DETAILS.map((d) => [d.slug, d]));
-  const bySlug = new Map<string, ListingProduct>();
+  const details = new Map(PRODUCT_DETAILS.map((d) => [d.id, d]));
+  const byId = new Map<string, ListingProduct>();
   for (const p of BEST_SELLERS) {
-    if (!bySlug.has(p.slug)) {
-      bySlug.set(p.slug, { ...p, deliveryDays: details.get(p.slug)?.deliveryDays });
+    if (!byId.has(p.id)) {
+      byId.set(p.id, { ...p, deliveryDays: details.get(p.id)?.deliveryDays });
     }
   }
   for (const d of PRODUCT_DETAILS) {
-    if (!bySlug.has(d.slug)) {
-      bySlug.set(d.slug, { ...toCardProduct(d), deliveryDays: d.deliveryDays });
+    if (!byId.has(d.id)) {
+      byId.set(d.id, { ...toCardProduct(d), deliveryDays: d.deliveryDays });
     }
   }
-  return [...bySlug.values()];
+  return [...byId.values()];
 })();
 
 /* Price slider ------------------------------------------------------ */

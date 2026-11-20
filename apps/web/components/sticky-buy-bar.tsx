@@ -60,7 +60,7 @@ export default function StickyBuyBar({
     >
       <div className="mx-auto flex h-16 w-full max-w-site items-center justify-between gap-4 px-4">
         <p className="leading-tight">
-          <span className="block text-lg font-extrabold text-brand-950">{price}</span>
+          <span className="block text-lg font-semibold text-brand-950">{price}</span>
           {detail && <span className="block text-xs text-muted">{detail}</span>}
         </p>
         {disabled ? (

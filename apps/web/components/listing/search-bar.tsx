@@ -116,7 +116,7 @@ function SortSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as SortKey)}
-        className="h-full min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent pr-8 text-sm font-medium lg:pr-9 lg:text-[15px] text-text focus:outline-none"
+        className="h-full min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent pr-8 text-sm lg:pr-9 lg:text-[15px] text-text focus:outline-none"
       >
         {SORT_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>

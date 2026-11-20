@@ -68,7 +68,7 @@ export default function CertificatesSection() {
             <div>
               <h2
                 id="certifications-heading"
-                className="max-w-[540px] text-[28px] leading-tight font-bold tracking-tight text-surface lg:text-[46px] lg:leading-[54px]"
+                className="max-w-[540px] text-[28px] leading-tight font-semibold tracking-tight text-surface lg:text-[46px] lg:leading-[54px]"
               >
                 {COPY.heading}
               </h2>
@@ -79,7 +79,7 @@ export default function CertificatesSection() {
 
             <Link
               href={COPY.viewAllHref}
-              className="inline-flex h-12 shrink-0 items-center self-start rounded-pill border border-brand-950 bg-brand-950 px-6 text-[15px] font-medium text-surface transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface lg:mt-10 lg:h-[54px]"
+              className="inline-flex h-12 shrink-0 items-center self-start rounded-pill border border-brand-950 bg-brand-950 px-6 text-[15px] text-surface transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface lg:mt-10 lg:h-[54px]"
             >
               {COPY.viewAllLabel}
             </Link>

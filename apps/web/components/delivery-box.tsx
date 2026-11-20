@@ -84,7 +84,7 @@ export default function DeliveryBox({
             <div className="min-w-0">
               <dt className="text-xs text-muted">{label}</dt>
               {/* Arrival is filled in after load (browser date). */}
-              <dd className="mt-0.5 min-h-5 text-sm font-medium text-text">
+              <dd className="mt-0.5 min-h-5 text-sm font-semibold text-text">
                 {value}
               </dd>
             </div>

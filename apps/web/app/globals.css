@@ -2,9 +2,9 @@
 
 /* Design tokens. Source: DESIGN.md §4. Never hardcode hex colors in components. */
 @theme {
-  /* Font: Inter, loaded in app/layout.tsx via next/font (sets --font-inter) */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-
+  /* Font: Poppins 400 + 600, loaded in app/layout.tsx via next/font (sets --font-poppins). See DESIGN.md §3. */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   /* Brand blues */
   --color-brand-950: #162456; /* header start, footer, prices, search button */
   --color-brand-900: #1c398e; /* header middle, desktop search button, footer divider */
@@ -52,4 +52,12 @@ body {
   background: var(--color-page);
   color: var(--color-text);
   font-family: var(--font-sans);
+}
+
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
 }

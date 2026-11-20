@@ -4,9 +4,9 @@
  */
 
 export const CERTIFICATIONS_CONTENT = {
-  heading: "Certifications",
+  heading: "CERTIFICATIONS",
   subheading:
-    "Our certifications and authorisations, shared so you can verify our credentials.",
+    "Our certifications and authorisations",
   viewAllLabel: "Certificates",
   viewAllHref: "/certificates",
 } as const;

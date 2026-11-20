@@ -33,7 +33,7 @@ export default function ProductGrid({ products, clearHref }: ProductGridProps) {
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5">
       {products.map((p) => (
-        <li key={p.slug}>
+        <li key={p.id}>
           <ProductCard product={p} showSaleBadge={p.onSale} showDelivery />
         </li>
       ))}

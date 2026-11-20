@@ -58,7 +58,7 @@ export default function PaymentOptions({
                     Razorpay
                   </span>
                   {demo && (
-                    <span className="rounded-md bg-brand-50 px-1.5 py-0.5 text-xs font-bold tracking-wide text-brand-700">
+                    <span className="rounded-md bg-brand-50 px-1.5 py-0.5 text-xs tracking-wide text-brand-700">
                       DEMO MODE
                     </span>
                   )}
@@ -111,7 +111,7 @@ export default function PaymentOptions({
       </div>
 
       {error && (
-        <p id="payment-error" className="mt-2 text-sm font-medium text-text">
+        <p id="payment-error" className="mt-2 text-sm text-text">
           {error}
         </p>
       )}

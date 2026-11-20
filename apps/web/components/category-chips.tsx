@@ -32,7 +32,7 @@ export default function CategoryChips({
           aria-label={label}
           value={selected}
           onChange={(e) => onSelect(e.target.value)}
-          className={`h-9 max-w-[55vw] appearance-none truncate rounded-md border border-line bg-surface pr-9 pl-3 text-sm font-medium text-text shadow-sm ${FOCUS}`}
+          className={`h-9 max-w-[55vw] appearance-none truncate rounded-md border border-line bg-surface pr-9 pl-3 text-sm text-text shadow-sm ${FOCUS}`}
         >
           {chips.map((chip) => (
             <option key={chip.value} value={chip.value}>

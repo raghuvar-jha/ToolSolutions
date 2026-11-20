@@ -6,7 +6,7 @@ import SiteHeader from "../../../components/Header";
 import Footer from "../../../components/footer";
 import { orderRepository } from "../../../lib/orders/json-order-repository";
 import type { Order } from "../../../lib/orders/order-repository";
-import { bestSellerHref, formatInr } from "../../../lib/Products";
+import { formatInr, productPageHref } from "../../../lib/Products";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
@@ -66,7 +66,7 @@ function OrderDetail({ order }: { order: Order }) {
         <span className="grid size-14 place-items-center rounded-pill bg-success-bg text-success">
           {placed ? <CircleCheck aria-hidden className="size-8" /> : <Clock aria-hidden className="size-8" />}
         </span>
-        <h1 className="mt-4 text-2xl font-bold text-text lg:text-[32px]">
+        <h1 className="mt-4 text-2xl font-semibold text-text lg:text-[32px]">
           {placed ? "Order placed" : "Payment pending"}
         </h1>
         <p className="mt-2 text-body">
@@ -88,7 +88,7 @@ function OrderDetail({ order }: { order: Order }) {
                     <Image src={l.image} alt={l.name} fill sizes="80px" className="object-contain p-2" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <Link href={bestSellerHref(l.slug)} className={`rounded-sm font-semibold text-text hover:text-brand-700 ${FOCUS}`}>
+                    <Link href={productPageHref(l.productId)} className={`rounded-sm font-semibold text-text hover:text-brand-700 ${FOCUS}`}>
                       {l.name}
                     </Link>
                     {l.variantLabel && <p className="text-sm text-muted">{l.variantLabel}</p>}
@@ -96,7 +96,7 @@ function OrderDetail({ order }: { order: Order }) {
                       Qty {l.quantity} × {formatInr(l.unitPrice)}
                     </p>
                   </div>
-                  <p className="shrink-0 font-bold text-brand-950">{formatInr(l.lineTotal)}</p>
+                  <p className="shrink-0 font-semibold text-brand-950">{formatInr(l.lineTotal)}</p>
                 </li>
               ))}
             </ul>
@@ -159,7 +159,7 @@ function OrderDetail({ order }: { order: Order }) {
             ))}
             <div className="flex justify-between gap-4">
               <dt className="text-body">Delivery Charges</dt>
-              <dd className={order.deliveryLabel === "free" ? "font-medium text-success" : "text-muted"}>
+              <dd className={order.deliveryLabel === "free" ? "font-semibold text-success" : "text-muted"}>
                 {order.deliveryLabel === "free"
                   ? "Free Delivery"
                   : order.deliveryLabel === "charged"
@@ -174,7 +174,7 @@ function OrderDetail({ order }: { order: Order }) {
           </dl>
           <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-line pt-4">
             <span className="text-lg font-semibold text-text">Total Amount</span>
-            <span className="text-lg font-bold text-brand-950">{formatInr(order.total)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatInr(order.total)}</span>
           </div>
           <div className="mt-6 flex flex-col gap-3">
             <Link
@@ -199,7 +199,7 @@ function OrderDetail({ order }: { order: Order }) {
 function OrderNotFound() {
   return (
     <section className="mx-auto max-w-md py-16 text-center">
-      <h1 className="text-2xl font-bold text-text lg:text-[32px]">Order not found</h1>
+      <h1 className="text-2xl font-semibold text-text lg:text-[32px]">Order not found</h1>
       <p className="mt-3 text-body">Check the link, or find your order in the list.</p>
       <Link
         href="/orders"

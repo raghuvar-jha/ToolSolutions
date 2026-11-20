@@ -83,26 +83,35 @@ Items 2–4 sit on a blue → white vertical gradient. The seasonal illustration
 
 ## 3. Typography
 
-Font: **Inter**, loaded in `app/layout.tsx` with `next/font/google` (`variable: "--font-inter"` on `<html>`). The `--font-sans` token in `globals.css` points to it (fallback `ui-sans-serif, system-ui, sans-serif`), so `font-sans` and the body default use Inter.
+Font: **Poppins** for all text, loaded in `app/layout.tsx` with `next/font/google` (`weight: ["400", "600"]`, `variable: "--font-poppins"` on `<html>`). The `--font-sans` token in `globals.css` points to it (fallback `ui-sans-serif, system-ui, sans-serif`), so `font-sans` and the body default use Poppins. No other font families are used (no Open Sans, Barlow or Lora).
+
+Only two weights are loaded:
+
+| Weight | Class | Used for |
+|---|---|---|
+| **SemiBold (600)** | `font-semibold` | Headings (h1 to h3) and values such as prices and totals |
+| **Regular (400)** | `font-normal` (default) | Labels, body text, links and buttons |
+
+Do not use `font-medium` (500), `font-bold` (700) or `font-extrabold` (800): those weights are not loaded, so the browser would fake or round them.
 
 | Role | Desktop | Mobile | Weight | Color |
 |---|---|---|---|---|
 | Section title (Popular, Featured, Reviews) | 20px | 18px | 600 | gray-900 |
-| Display section title (Our Certifications) | 28px | 22px | 800 (extra-bold) | gray-900 |
+| Display section title (Our Certifications) | 28px | 22px | 600 | gray-900 |
 | Section subtitle ("What our customers say") | 14px | 14px | 400 | gray-500 |
-| Header nav links | 16px | — | 500 | gray-900 / white on header |
-| "Today's Deals" / "View All" links | 16px | 15px | 600 | blue-700 / blue-800 |
+| Header nav links | 16px | — | 400 | gray-900 / white on header |
+| "Today's Deals" / "View All" links | 16px | 15px | 400 | blue-700 / blue-800 |
 | Product card title | 15px | 15px | 600, centered | gray-900 |
-| Price | 18px | 18px | 800 | blue-950 |
+| Price | 18px | 18px | 600 | blue-950 |
 | MRP (struck through) | 11px | 11px | 400, `line-through` | gray-400 |
-| "1 DAY" badge | 11px | 11px | 700, uppercase | green-700 |
+| "1 DAY" badge | 11px | 11px | 400, uppercase | green-700 |
 | Trust item title / sub | 14px / 12px | — | 600 / 400 | gray-900 / gray-500 |
 | Review name / text | 16px / 14px, leading-relaxed | same | 600 / 400 | gray-900 / gray-600 |
 | Footer heading / link | 16px / 15px | same | 600 / 400 | white / blue-200 |
 | Copyright | 14px | 13px | 400 | blue-300 |
 | Search placeholder | 16px | 15px | 400 | gray-400 |
-| Mobile category label | — | 13px | 500 | gray-900 |
-| Mobile tab bar label | — | 11px | 500 | gray-600 (active blue-700) |
+| Mobile category label | — | 13px | 400 | gray-900 |
+| Mobile tab bar label | — | 11px | 400 | gray-600 (active blue-700) |
 
 ---
 
@@ -177,7 +186,7 @@ These colors are applied as `@theme` tokens in `apps/web/app/globals.css` (see t
 | `--color-footer-icon` | `#ffdf20` | `text-footer-icon` |
 | `--radius-card` / `--radius-banner` / `--radius-pill` | 12px / 16px / 9999px | `rounded-card`, `rounded-banner`, `rounded-pill` |
 | `--container-site` | 1280px | `max-w-site` (via `<Container>`) |
-| `--font-sans` | Inter | `font-sans` (body default) |
+| `--font-sans` | Poppins | `font-sans` (body default) |
 
 If a component needs a color that isn't listed here, add a token first.
 

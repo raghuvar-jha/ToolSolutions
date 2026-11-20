@@ -34,7 +34,7 @@ import { CATEGORIES, categoryHref } from "../lib/categories";
 const SAVED_COUNT: number = 0;
 
 // Display-only delivery info (no geolocation in v1).
-const DELIVERY_AREA = "Noida & NCR";
+const DELIVERY_AREA = "INDIA";
 const DELIVERY_TIME = "1 Day";
 
 // Desktop nav shows this many categories inline; the rest go under "More".
@@ -99,7 +99,7 @@ function SearchInput({
       required
       defaultValue={defaultValue}
       aria-label="Search tools"
-      placeholder="Search tools..."
+      placeholder="Search by tool, brand, size or model..."
       enterKeyHint="search"
       autoComplete="off"
       className={`h-full min-w-0 flex-1 bg-transparent text-text placeholder:text-faint focus:outline-none ${
@@ -161,13 +161,11 @@ function SearchForm({ variant }: { variant: "desktop" | "mobile" }) {
 /** Display-only location pill (no geolocation in v1). */
 function LocationPill() {
   return (
-    <p
-      title={`Delivering to ${DELIVERY_AREA}`}
-      className="flex h-11 w-[150px] shrink-0 items-center gap-2 rounded-lg bg-surface/10 px-3 text-surface"
+    <p className="flex h-7 w-[100px] shrink-0 items-center gap-2 rounded-lg"
     >
-      <MapPin aria-hidden className="size-5 shrink-0" />
+      
       <span className="sr-only">Delivering to</span>
-      <span className="truncate text-base font-medium">{DELIVERY_AREA}</span>
+      <span className="truncate text-base"></span>
     </p>
   );
 }
@@ -187,7 +185,7 @@ function ActionContent({
       <Icon aria-hidden strokeWidth={1.75} className="size-6 shrink-0" />
       <span className="leading-tight">
         <span className="block text-xs text-brand-200">{caption}</span>
-        <span className="block text-base font-medium whitespace-nowrap">
+        <span className="block text-base whitespace-nowrap">
           {value}
         </span>
       </span>
@@ -202,16 +200,21 @@ function HeaderActions() {
   const { itemCount } = useCart();
   return (
     <div className="flex shrink-0 items-center gap-6 text-surface">
-      {/* Display-only in v1: no wishlist or auth yet (DESIGN.md §8 #7). */}
+      {/* Display-only in v1: no wishlist yet (DESIGN.md §8 #7). */}
       <p className="flex items-center gap-2">
         <ActionContent icon={Heart} caption="Saved" value={itemsLabel(SAVED_COUNT)} />
       </p>
-      <p className="flex items-center gap-2">
+      {/* Goes to signup until login exists (spec 010). */}
+      <Link
+        href="/signup"
+        aria-label="Account, sign in"
+        className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
+      >
         <ActionContent icon={User} caption="Account" value="Sign in" />
-      </p>
+      </Link>
       <Link
         href="/cart"
-        aria-label={`My cart, ${cartLabel(itemCount)}`}
+        aria-label={`MY CART, ${cartLabel(itemCount)}`}
         className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
       >
         <ActionContent
@@ -245,7 +248,7 @@ function DesktopCategoryNav() {
           <li key={slug}>
             <Link
               href={categoryHref(slug)}
-              className={`rounded-md text-base font-medium whitespace-nowrap text-text hover:text-brand-700 ${FOCUS_ON_LIGHT}`}
+              className={`rounded-md text-base whitespace-nowrap text-text hover:text-brand-700 ${FOCUS_ON_LIGHT}`}
             >
               {name}
             </Link>
@@ -259,7 +262,7 @@ function DesktopCategoryNav() {
         href="/deals"
         className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-md text-base font-semibold text-brand-700 hover:text-brand-800 ${FOCUS_ON_LIGHT}`}
       >
-        <Zap aria-hidden className="size-5" />
+        
         Today&apos;s Deals
       </Link>
     </nav>
@@ -291,7 +294,7 @@ function MobileDeliveryRow() {
         <Truck aria-hidden className="size-5 shrink-0 text-success" />
         <span className="leading-tight">
           <span className="block text-[11px] text-muted">Delivery</span>
-          <span className="block text-base font-extrabold text-success">
+          <span className="block text-base font-semibold text-success">
             {DELIVERY_TIME}
           </span>
         </span>
@@ -347,7 +350,7 @@ function MobileCategoryStrip() {
                   href={href}
                   aria-label={name}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-w-14 flex-col items-center gap-1.5 rounded-card border-b-[3px] px-2 pt-1.5 pb-1.5 text-[13px] font-medium whitespace-nowrap text-text transition-colors ${FOCUS_ON_LIGHT} ${
+                  className={`flex min-w-14 flex-col items-center gap-1.5 rounded-card border-b-[3px] px-2 pt-1.5 pb-1.5 text-[13px] whitespace-nowrap text-text transition-colors ${FOCUS_ON_LIGHT} ${
                     active
                       ? "border-brand-950 bg-surface/30 inset-shadow-sm inset-shadow-brand-950/15"
                       : "border-transparent hover:bg-surface/20"

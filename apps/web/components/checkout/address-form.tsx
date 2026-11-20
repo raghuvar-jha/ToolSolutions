@@ -69,7 +69,7 @@ type AddressFormProps = {
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <p id={id} className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-text">
+    <p id={id} className="mt-1.5 flex items-start gap-1.5 text-sm text-text">
       <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-950" />
       {message}
     </p>
@@ -78,7 +78,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 function Label({ htmlFor, label, optional }: { htmlFor: string; label: string; optional?: boolean }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-text">
+    <label htmlFor={htmlFor} className="mb-1.5 block text-sm text-text">
       {label}
       {optional ? (
         <span className="font-normal text-muted"> (optional)</span>
@@ -222,7 +222,7 @@ export default function AddressForm({ values, errors, onChange, fieldRef }: Addr
         type="button"
         aria-disabled="true"
         title="Saving more addresses is coming soon"
-        className={`mt-3 inline-flex cursor-not-allowed items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-muted ${FOCUS}`}
+        className={`mt-3 inline-flex cursor-not-allowed items-center gap-1.5 rounded-md px-1 py-1 text-sm text-muted ${FOCUS}`}
       >
         <Plus aria-hidden className="size-4" />
         Add new address

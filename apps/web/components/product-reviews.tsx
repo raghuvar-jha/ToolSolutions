@@ -70,7 +70,7 @@ export default function ProductReviews({ reviews }: { reviews: ProductReview[] }
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-10">
             <div className="shrink-0">
               <p className="flex items-baseline">
-                <span className="text-7xl leading-none font-bold text-text lg:text-[112px]">
+                <span className="text-7xl leading-none font-semibold text-text lg:text-[112px]">
                   {average.toFixed(1)}
                 </span>
                 <span className="ml-1 text-2xl text-muted lg:text-3xl">/5</span>

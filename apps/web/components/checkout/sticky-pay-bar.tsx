@@ -20,7 +20,7 @@ export default function StickyPayBar({ total, submitting, canPay }: StickyPayBar
       <div className="mx-auto flex w-full max-w-site items-center gap-4 px-4 py-3">
         <p className="shrink-0 leading-tight">
           <span className="block text-xs text-muted">Total</span>
-          <span className="block text-lg font-bold text-brand-950">{formatInr(total)}</span>
+          <span className="block text-lg font-semibold text-brand-950">{formatInr(total)}</span>
         </p>
         <button type="submit" disabled={submitting || !canPay} className={PAY_BUTTON}>
           {submitting ? "Placing order…" : "Proceed to pay"}

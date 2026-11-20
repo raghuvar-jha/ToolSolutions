@@ -32,7 +32,7 @@ export default function QuantityStepper({ value, max, onChange, label }: Quantit
       >
         <Minus aria-hidden className="size-4" />
       </button>
-      <output aria-live="polite" className="min-w-7 text-center text-[15px] font-medium text-text">
+      <output aria-live="polite" className="min-w-7 text-center text-[15px] text-text">
         {value}
       </output>
       <button
