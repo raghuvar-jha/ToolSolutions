@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import MobileTabBar from "../components/mobile-tab-bar";
+import { CartProvider } from "../lib/cart/cart-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,8 +32,11 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       {/* Mobile: bottom padding so the fixed tab bar never covers content. */}
       <body className="pb-[calc(59px+env(safe-area-inset-bottom))] lg:pb-0">
-        {children}
-        <MobileTabBar />
+        {/* Shared cart state for the header, product page and cart page. */}
+        <CartProvider>
+          {children}
+          <MobileTabBar />
+        </CartProvider>
       </body>
     </html>
   );

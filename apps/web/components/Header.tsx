@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import CategoryMenu from "./CategoryMenu";
+import { useCart } from "../lib/cart/cart-context";
 import { CATEGORIES, categoryHref } from "../lib/categories";
 
 /*
@@ -29,8 +30,7 @@ import { CATEGORIES, categoryHref } from "../lib/categories";
 /* Data                                                                */
 /* ------------------------------------------------------------------ */
 
-// Hardcoded until cart functionality exists.
-const CART_COUNT: number = 0;
+// Hardcoded until a saved list exists. The cart count is live (useCart).
 const SAVED_COUNT: number = 0;
 
 // Display-only delivery info (no geolocation in v1).
@@ -195,7 +195,11 @@ function ActionContent({
   );
 }
 
+/** Cart link label; the count is hidden while the cart is empty (or still loading). */
+const cartLabel = (n: number) => (n > 0 ? itemsLabel(n) : "empty");
+
 function HeaderActions() {
+  const { itemCount } = useCart();
   return (
     <div className="flex shrink-0 items-center gap-6 text-surface">
       {/* Display-only in v1: no wishlist or auth yet (DESIGN.md §8 #7). */}
@@ -207,13 +211,13 @@ function HeaderActions() {
       </p>
       <Link
         href="/cart"
-        aria-label={`My cart, ${itemsLabel(CART_COUNT)}`}
+        aria-label={`My cart, ${cartLabel(itemCount)}`}
         className={`flex items-center gap-2 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
       >
         <ActionContent
           icon={ShoppingCart}
           caption="My cart"
-          value={itemsLabel(CART_COUNT)}
+          value={itemCount > 0 ? itemsLabel(itemCount) : "Empty"}
         />
       </Link>
     </div>
@@ -297,16 +301,19 @@ function MobileDeliveryRow() {
 }
 
 function MobileCartPill() {
+  const { itemCount } = useCart();
   return (
     <Link
       href="/cart"
-      aria-label={`Cart, ${itemsLabel(CART_COUNT)}`}
+      aria-label={`Cart, ${cartLabel(itemCount)}`}
       className={`flex h-11 shrink-0 items-center gap-1.5 rounded-card bg-surface px-3 text-text shadow-sm ${FOCUS_ON_LIGHT}`}
     >
       <ShoppingCart aria-hidden className="size-5" />
-      <span aria-hidden className="text-base font-semibold">
-        {CART_COUNT}
-      </span>
+      {itemCount > 0 && (
+        <span aria-hidden className="text-base font-semibold">
+          {itemCount}
+        </span>
+      )}
     </Link>
   );
 }
