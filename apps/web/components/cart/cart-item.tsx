@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CircleAlert, Heart, RotateCcw, Trash2, Truck } from "lucide-react";
+import { CircleAlert, RotateCcw, Trash2, Truck } from "lucide-react";
 import type { CartItem as CartItemData } from "../../lib/cart/cart-context";
 import { formatInr, productPageHref } from "../../lib/Products";
 import { DELIVERY_WINDOW_DAYS } from "../../lib/shipping";
+import SaveButton from "../save-button";
 import QuantityStepper from "./quantity-stepper";
 
 const FOCUS =
@@ -72,18 +73,8 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
               </p>
             )}
           </div>
-          {/* Display-only in v1: there is no saved list yet. */}
-          <button
-            type="button"
-            aria-disabled="true"
-            title="Save for later is coming soon"
-            onClick={(e) => e.preventDefault()}
-            className={`flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-md px-1 py-0.5 text-sm text-body ${FOCUS}`}
-          >
-            <Heart aria-hidden className="size-4" />
-            Save
-            <span className="sr-only"> (coming soon)</span>
-          </button>
+          {/* Saves the product for later; it stays in the cart. */}
+          <SaveButton productId={product.id} productName={product.name} variant="text" />
         </div>
 
         {stock <= LOW_STOCK && (

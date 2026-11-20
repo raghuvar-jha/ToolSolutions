@@ -40,7 +40,7 @@ export const HERO_SLIDES: HeroSlide[] = [
 ];
 
 /** Blank placeholder slides appended to the mobile carousel (demo only). */
-export const DEMO_SLIDE_COUNT = 2;
+export const DEMO_SLIDE_COUNT = 0;
 
 /** Auto-advance interval for the mobile carousel. */
 export const HERO_AUTOPLAY_MS = 5000;

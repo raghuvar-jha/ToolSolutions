@@ -6,7 +6,7 @@
 export const CERTIFICATIONS_CONTENT = {
   heading: "CERTIFICATIONS",
   subheading:
-    "Our certifications and authorisations",
+    "- Our certifications and authorisations",
   viewAllLabel: "Certificates",
   viewAllHref: "/certificates",
 } as const;

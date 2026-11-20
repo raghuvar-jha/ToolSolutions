@@ -184,6 +184,7 @@ These colors are applied as `@theme` tokens in `apps/web/app/globals.css` (see t
 | `--color-chat` | `#00c950` | `bg-chat` |
 | `--color-star` | `#fdc700` | `text-star` |
 | `--color-footer-icon` | `#ffdf20` | `text-footer-icon` |
+| `--color-badge` | `#53eafd` | `bg-badge` (header count badge) |
 | `--radius-card` / `--radius-banner` / `--radius-pill` | 12px / 16px / 9999px | `rounded-card`, `rounded-banner`, `rounded-pill` |
 | `--container-site` | 1280px | `max-w-site` (via `<Container>`) |
 | `--font-sans` | Poppins | `font-sans` (body default) |
@@ -203,10 +204,12 @@ Mock: bar 960px wide, row 1 ≈54px, row 2 ≈32px, content inset ≈88px each s
   1. **Logo**: `logo/DesktopLogo.png`, ~32px tall (white text, dark background only).
   2. **Location pill**: ~150×44px, radius 8px, `bg-white/10` on the gradient, `MapPin` + "Select location" (16/500 white, truncated with ellipsis). **Display-only in v1.**
   3. **Search**: `flex-1`, max ~560px, 44px tall, white, radius 8px. Placeholder "Search by tool, brand, size or model..." (16px `faint`). Search button is a 44×36px `well` square **inside** the right end (radius 6px, `brand-900` `Search` icon). The "All Tools ▾" select from v0 is dropped; the category menu lives in row 2.
-  4. **Right cluster** (gap 24px), three items, each = 24px white Lucide icon + a 2-line label: caption 12/400 `brand-200` over value 16/500 white.
-     - `Heart` "Saved" / "0 items" (**display-only in v1**)
-     - `User` "Account" / "Sign in" (**display-only in v1**, replaces Login + Register)
-     - `ShoppingCart` "My cart" / "{n} items" (live cart count)
+  4. **Right cluster** (gap 28px), three items, each = 24px white Lucide icon + a 2-line label (14px gap): caption 12/400 `brand-200` over value 16/400 white.
+     - `Heart` "Saved" / "{n} items" (live saved count, links to `/saved`)
+     - `User` "Account" / "Sign in" (links to `/signup`, replaces Login + Register)
+     - `ShoppingCart` "My cart" / "{n} items" (live cart count, links to `/cart`)
+     - **Count badge** (`components/count-badge.tsx`) on the Saved and Cart icons: 20px `bg-badge` circle, 12/600 `brand-950` number, on the icon's top-right corner. It pops (scale, 450ms, `animate-badge-pop`, off with reduced motion) when the count goes up, e.g. after Add to Cart. Mobile: Saved and Cart are 44px white pills next to the search box with the same badge (Saved hides it at 0).
+  - **Saved items**: heart button on every product card (top-right of the image), next to the product page title, and "Save" on cart lines. Stored as product ids in localStorage (`saved-v1`, `lib/saved/saved-context.tsx`); `/saved` lists them in the listing grid.
 
 **Row 2: category nav**
 - White, height **44px**, bottom border `line`, shadow-sm.
@@ -413,7 +416,7 @@ Mock: 1035px wide; left column ≈442px, right ≈372px, gap ≈17px; card radiu
 | 4 | Clamping Tool product photo | Placeholder image |
 | 5 | 4th certificate | Show 3 |
 | 6 | Confirm the navy bar on product cards means "Add to cart" | Built as an Add to cart button |
-| 7 | Header: "Saved" (wishlist) and "Account / Sign in" replace Login + Register | Display-only; no wishlist or auth in v1 |
+| 7 | Header: "Saved" (wishlist) and "Account / Sign in" replace Login + Register | Saved is live (browser-only list); no auth sessions in v1 |
 | 8 | Newsletter signup in the footer | Display-only form, no backend |
 | 9 | Accepted payment methods and whether to show brand logos | Text chips (UPI, Cards, Cash on delivery), no logos |
 | 10 | Real customer rating to show in the footer | 4.8 (same as the reviews panel) |
@@ -421,7 +424,7 @@ Mock: 1035px wide; left column ≈442px, right ≈372px, gap ≈17px; card radiu
 
 ## 9. v1 scope summary
 
-- **Display-only:** Account / Sign in, Saved (wishlist), Select location, Notifications, the "1 Day" delivery label, footer newsletter form, PDP "Add to wishlist".
+- **Display-only:** Account / Sign in, Select location, Notifications, the "1 Day" delivery label, footer newsletter form, PDP "Add to wishlist".
 - **Functional:** search input (UI), hero carousel, Add to cart (client-side cart count), product and category links, product list filter chips, PDP thumbnails, checkout quantity stepper / remove / totals (client-side).
 - **Data:** `apps/web/lib/products.ts` until PostgreSQL + Prisma.
 - **Not in v1:** "For You" category, seasonal illustration, hero arrows, 4th certificate, footer country selector, payment brand logos, third-party rating widgets, PDP countdown / pay-in-parts / vendor compare / "sold in last N hours", checkout per-store grouping / "Replace with" / pay-later button, real payment.
