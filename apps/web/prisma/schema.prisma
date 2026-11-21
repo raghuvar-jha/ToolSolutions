@@ -1,4 +1,4 @@
-// Catalog schema (spec 012). Accounts and orders are added in the account data spec.
+// Catalog (spec 012) and accounts (spec 013). Orders come in a later spec.
 //
 // Money is integer paise (₹1 = 100). GST is basis points (18% = 1800).
 // Neon PostgreSQL. Connection URLs come from prisma.config.ts (DIRECT_URL) and lib/prisma-client.ts (DATABASE_URL).
@@ -85,8 +85,8 @@ model Review {
   id               String       @id @default(cuid())
   productId        String
   product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  /// Becomes a relation to User when the account data spec adds that model.
   userId           String?
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   authorName       String
   /// 1 to 5 (checked in the migration).
   rating           Int
@@ -100,4 +100,46 @@ model Review {
 
   @@unique([userId, productId])
   @@index([productId, status])
+}
+
+/**
+ * Accounts (spec 013) ------------------------------------------------
+ */
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  /// Always stored lowercase.
+  email           String    @unique
+  phone           String?
+  /// argon2id hash. The password itself is never stored.
+  passwordHash    String
+  /// Unused for now.
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  sessions        Session[]
+  reviews         Review[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 (hex) of the cookie token. The token itself lives only in the browser.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  /// Lowercase.
+  email     String
+  succeeded Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
 }

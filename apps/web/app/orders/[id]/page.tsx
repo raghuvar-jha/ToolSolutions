@@ -7,6 +7,7 @@ import Footer from "../../../components/footer";
 import { orderRepository } from "../../../lib/orders/json-order-repository";
 import type { Order } from "../../../lib/orders/order-repository";
 import { formatInr, productPageHref } from "../../../lib/Products";
+import { getCurrentUser, requireUser } from "../../../lib/auth/session";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
@@ -35,13 +36,15 @@ const PAYMENT_TEXT: Record<Order["payment"]["status"], string> = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
+  if (!(await getCurrentUser())) return { title: "Order" };
   const order = await orderRepository.findById(id);
   return { title: order ? `Order ${order.number}` : "Order not found" };
 }
 
-/** Order confirmation and detail (spec 009). The random order ID is the only key (v1 has no login). */
+/** Order confirmation and detail (spec 009). Login required (spec 013); orders aren't linked to accounts yet. */
 export default async function OrderPage({ params }: PageProps) {
   const { id } = await params;
+  await requireUser(`/orders/${encodeURIComponent(id)}`);
   const order = await orderRepository.findById(id);
 
   return (

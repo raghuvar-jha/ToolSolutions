@@ -4,6 +4,8 @@ import MobileTabBar from "../components/mobile-tab-bar";
 import { CartProvider } from "../lib/cart/cart-context";
 import { CatalogProvider } from "../lib/catalog/catalog-context";
 import { getAllProducts } from "../lib/catalog/product-repository";
+import { getCurrentUser } from "../lib/auth/session";
+import { UserProvider } from "../lib/auth/user-context";
 import { SavedProvider } from "../lib/saved/saved-context";
 import "./globals.css";
 
@@ -33,21 +35,25 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Cart, saved items and recommendations look products up in this catalog.
-  const catalog = await getAllProducts();
+  // The header shows the first name only; nothing else about the user reaches the browser here.
+  const [catalog, user] = await Promise.all([getAllProducts(), getCurrentUser()]);
+  const sessionUser = user ? { firstName: user.name.trim().split(/\s+/)[0] ?? user.name } : null;
 
   return (
     <html lang="en" className={poppins.variable}>
       {/* Mobile: bottom padding so the fixed tab bar never covers content. */}
       <body className="pb-[calc(59px+env(safe-area-inset-bottom))] lg:pb-0">
         {/* Shared cart and saved-items state for the header, cards, product page and cart page. */}
-        <CatalogProvider products={catalog}>
-          <CartProvider>
-            <SavedProvider>
-              {children}
-              <MobileTabBar />
-            </SavedProvider>
-          </CartProvider>
-        </CatalogProvider>
+        <UserProvider user={sessionUser}>
+          <CatalogProvider products={catalog}>
+            <CartProvider>
+              <SavedProvider>
+                {children}
+                <MobileTabBar />
+              </SavedProvider>
+            </CartProvider>
+          </CatalogProvider>
+        </UserProvider>
       </body>
     </html>
   );
