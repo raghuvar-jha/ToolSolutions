@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ChevronDown, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCart } from "../lib/cart/cart-context";
-import { formatInr, type ProductDetail } from "../lib/Products";
+import { formatPaise } from "../lib/catalog/format";
+import type { ProductDetail } from "../lib/catalog/types";
 import ProductSpecs from "./product-specs";
 import SaveButton from "./save-button";
 import StickyBuyBar from "./sticky-buy-bar";
@@ -34,12 +35,13 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
   const buttonsRef = useRef<HTMLDivElement>(null);
 
   const variant = variants[variantIndex];
-  const price = variant?.price ?? product.price;
+  // Paise; formatted only for display.
+  const price = variant?.pricePaise ?? product.pricePaise;
   const stock = variant?.stock ?? product.stock;
   const outOfStock = stock <= 0;
   const original =
-    product.originalPrice && product.originalPrice > price
-      ? product.originalPrice
+    product.originalPricePaise && product.originalPricePaise > price
+      ? product.originalPricePaise
       : null;
   const savings = original ? original - price : 0;
 
@@ -69,18 +71,18 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="sr-only">Price</span>
           <span className="text-[28px] font-semibold text-brand-950 lg:text-[32px]">
-            {formatInr(price)}
+            {formatPaise(price)}
           </span>
           {original && (
             <s className="text-base text-faint">
               <span className="sr-only">Original price</span>
-              {formatInr(original)}
+              {formatPaise(original)}
             </s>
           )}
         </p>
         {savings > 0 && (
           <p className="mt-1 text-sm font-semibold text-success">
-            You save {formatInr(savings)} (
+            You save {formatPaise(savings)} (
             {Math.round((savings / original!) * 100)}% off)
           </p>
         )}
@@ -230,7 +232,7 @@ export default function ProductInfo({ product }: { product: ProductDetail }) {
 
       <StickyBuyBar
         targetRef={buttonsRef}
-        price={formatInr(price)}
+        price={formatPaise(price)}
         detail={variant ? `${variant.name}: ${variant.value} · Qty ${qty}` : `Qty ${qty}`}
         buyHref={buyHref}
         disabled={outOfStock}

@@ -8,6 +8,9 @@
  * The browser sends only product IDs, variant IDs and quantities. Prices, stock,
  * GST, delivery and the total are recalculated here from lib/Products.ts.
  */
+
+
+
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
@@ -360,3 +363,4 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json(result.body, { status: result.status });
 }
+

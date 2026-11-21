@@ -3,7 +3,7 @@
 import { SlidersHorizontal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { PRICE_MAX, listingHref, type ListingFilters } from "../../lib/listing";
+import { listingHref, type ListingFilters } from "../../lib/listing";
 import { CATEGORY_OPTIONS, FOCUS, PriceRange } from "./filter-sidebar";
 
 /**
@@ -15,21 +15,21 @@ export default function FilterSheet({ filters }: { filters: ListingFilters }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [category, setCategory] = useState(filters.category);
-  const [max, setMax] = useState(filters.max ?? PRICE_MAX);
+  const [max, setMax] = useState(filters.max ?? filters.priceMax);
 
   const active = (filters.category ? 1 : 0) + (filters.max !== null ? 1 : 0);
 
   const open = () => {
     // Start from what the URL shows now.
     setCategory(filters.category);
-    setMax(filters.max ?? PRICE_MAX);
+    setMax(filters.max ?? filters.priceMax);
     dialogRef.current?.showModal();
   };
   const close = () => dialogRef.current?.close();
 
   const apply = () => {
     router.push(
-      listingHref({ ...filters, category, max: max >= PRICE_MAX ? null : max }),
+      listingHref({ ...filters, category, max: max >= filters.priceMax ? null : max }),
       { scroll: false },
     );
     close();
@@ -119,7 +119,7 @@ export default function FilterSheet({ filters }: { filters: ListingFilters }) {
             </fieldset>
 
             <div className="mt-6">
-              <PriceRange id="sheet-price" value={max} onChange={setMax} />
+              <PriceRange id="sheet-price" value={max} max={filters.priceMax} onChange={setMax} />
             </div>
           </div>
 

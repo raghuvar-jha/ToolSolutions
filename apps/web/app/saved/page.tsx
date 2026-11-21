@@ -5,7 +5,8 @@ import { Heart } from "lucide-react";
 import SiteHeader from "../../components/Header";
 import Footer from "../../components/footer";
 import ProductCard from "../../components/product-card";
-import { countText, LISTING_PRODUCTS } from "../../lib/listing";
+import { useCatalog } from "../../lib/catalog/catalog-context";
+import { countText } from "../../lib/listing";
 import { useSaved } from "../../lib/saved/saved-context";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
@@ -14,8 +15,6 @@ const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
 
-const BY_ID = new Map(LISTING_PRODUCTS.map((p) => [p.id, p]));
-
 /**
  * Saved items: the products the shopper hearted, newest first, in the
  * listing grid. The list lives in localStorage, so the page shows a
@@ -23,7 +22,8 @@ const BY_ID = new Map(LISTING_PRODUCTS.map((p) => [p.id, p]));
  */
 export default function SavedPage() {
   const { ids, loaded } = useSaved();
-  const products = ids.flatMap((id) => BY_ID.get(id) ?? []);
+  const { summaries } = useCatalog();
+  const products = ids.flatMap((id) => summaries.find((p) => p.id === id) ?? []);
 
   return (
     <>

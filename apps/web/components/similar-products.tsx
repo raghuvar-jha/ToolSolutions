@@ -1,16 +1,11 @@
-import {
-  getSimilarProducts,
-  toCardProduct,
-  type ProductDetail,
-} from "../lib/Products";
+import type { ProductSummary } from "../lib/catalog/types";
 import ProductCard from "./product-card";
 
 /**
  * Up to 4 products from the same category (current product excluded), shown
  * with the Best Sellers card. Hidden when fewer than 2 are found.
  */
-export default function SimilarProducts({ product }: { product: ProductDetail }) {
-  const similar = getSimilarProducts(product, 4);
+export default function SimilarProducts({ similar }: { similar: ProductSummary[] }) {
   if (similar.length < 2) return null;
 
   return (
@@ -24,7 +19,7 @@ export default function SimilarProducts({ product }: { product: ProductDetail })
       <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-5">
         {similar.map((p) => (
           <li key={p.id}>
-            <ProductCard product={toCardProduct(p)} />
+            <ProductCard product={p} />
           </li>
         ))}
       </ul>

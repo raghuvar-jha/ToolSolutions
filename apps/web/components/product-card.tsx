@@ -3,15 +3,12 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { deliveryText } from "../lib/listing";
 import SaveButton from "./save-button";
-import {
-  productPageHref,
-  formatInr,
-  type BestSellerProduct,
-} from "../lib/Products";
+import { formatPaise, productPageHref } from "../lib/catalog/format";
+import type { ProductSummary } from "../lib/catalog/types";
 
 type ProductCardProps = {
-  /** deliveryDays is optional: without it the delivery line is never shown. */
-  product: BestSellerProduct & { deliveryDays?: number };
+  /** Without deliveryDays the delivery line is never shown. */
+  product: ProductSummary;
   /** "Sale" pill, still only for products that are on sale. Default: on. */
   showSaleBadge?: boolean;
   /** "✓ N Day Delivery" line (listing page). Default: off. */
@@ -24,8 +21,8 @@ export default function ProductCard({
   showSaleBadge = true,
   showDelivery = false,
 }: ProductCardProps) {
-  const showOriginal =
-    product.onSale && product.originalPrice > product.price;
+  const original = product.originalPricePaise;
+  const showOriginal = product.onSale && original !== null && original > product.pricePaise;
   const delivery = showDelivery ? deliveryText(product.deliveryDays) : null;
 
   return (
@@ -54,12 +51,12 @@ export default function ProductCard({
         <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
           <span className="sr-only">Price</span>
           <span className="text-sm font-semibold text-brand-950">
-            {formatInr(product.price)}
+            {formatPaise(product.pricePaise)}
           </span>
           {showOriginal && (
             <s className="text-[13px] text-faint">
               <span className="sr-only">Original price</span>
-              {formatInr(product.originalPrice)}
+              {formatPaise(original!)}
             </s>
           )}
         </p>

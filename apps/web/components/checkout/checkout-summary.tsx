@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowRight, ChevronDown, Lock } from "lucide-react";
 import { useState } from "react";
 import type { CartItem } from "../../lib/cart/cart-context";
-import { formatInr } from "../../lib/Products";
+import { formatPaise } from "../../lib/catalog/format";
+import { DEFAULT_DELIVERY_DAYS } from "../../lib/shipping";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
@@ -77,10 +78,10 @@ export default function CheckoutSummary({
               )}
               <p className="mt-1 text-sm text-muted">
                 Estimated delivery by{" "}
-                <span className="font-semibold text-text">{deliveryBy(item.product.deliveryDays)}</span>
+                <span className="font-semibold text-text">{deliveryBy(item.product.deliveryDays ?? DEFAULT_DELIVERY_DAYS)}</span>
               </p>
               <div className="mt-auto flex items-baseline justify-between gap-3 pt-2">
-                <span className="font-semibold text-brand-950">{formatInr(item.unitPrice)}</span>
+                <span className="font-semibold text-brand-950">{formatPaise(item.unitPrice)}</span>
                 <span className="text-sm text-muted">
                   Qty: <span className="font-semibold text-text">{item.quantity}</span>
                 </span>
@@ -101,7 +102,7 @@ export default function CheckoutSummary({
         >
           <span className="font-semibold text-text">Price details</span>
           <span className="flex items-center gap-2 font-semibold text-brand-950">
-            {formatInr(total)}
+            {formatPaise(total)}
             <ChevronDown aria-hidden className={`size-5 text-text transition-transform ${open ? "rotate-180" : ""}`} />
           </span>
         </button>
@@ -117,7 +118,7 @@ export default function CheckoutSummary({
                   {item.quantity} × {item.product.name}
                   {item.variant ? ` (${item.variant.value})` : ""}
                 </dt>
-                <dd className="shrink-0 text-text">{formatInr(item.lineTotal)}</dd>
+                <dd className="shrink-0 text-text">{formatPaise(item.lineTotal)}</dd>
               </div>
             ))}
             <div className="flex justify-between gap-4">
@@ -128,12 +129,12 @@ export default function CheckoutSummary({
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-body">GST</dt>
-              <dd className="text-text">{gstIncluded ? "Included in price" : formatInr(gst)}</dd>
+              <dd className="text-text">{gstIncluded ? "Included in price" : formatPaise(gst)}</dd>
             </div>
           </dl>
           <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-line pt-4">
             <span className="text-lg font-semibold text-text">Total Amount</span>
-            <span className="text-lg font-semibold text-brand-950">{formatInr(total)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatPaise(total)}</span>
           </div>
         </div>
       </div>

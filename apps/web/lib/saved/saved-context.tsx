@@ -15,26 +15,26 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import { LISTING_PRODUCTS } from "../listing";
+import { useCatalog } from "../catalog/catalog-context";
 
 const STORAGE_KEY = "saved-v1";
 
-const KNOWN_IDS = new Set(LISTING_PRODUCTS.map((p) => p.id));
+type KnownIds = { has: (id: string) => boolean };
 
 /** Keep known product ids only, once each, in stored order. */
-function sanitize(stored: unknown): string[] {
+function sanitize(known: KnownIds, stored: unknown): string[] {
   if (!Array.isArray(stored)) return [];
   const ids: string[] = [];
   for (const id of stored) {
-    if (typeof id === "string" && KNOWN_IDS.has(id) && !ids.includes(id)) ids.push(id);
+    if (typeof id === "string" && known.has(id) && !ids.includes(id)) ids.push(id);
   }
   return ids;
 }
 
-function readStored(): string[] {
+function readStored(known: KnownIds): string[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return sanitize(raw ? JSON.parse(raw) : []);
+    return sanitize(known, raw ? JSON.parse(raw) : []);
   } catch {
     return [];
   }
@@ -47,7 +47,7 @@ type Action =
   | { type: "sync"; ids: string[] }
   | { type: "toggle"; id: string };
 
-function reducer(state: State, action: Action): State {
+function reducer(known: KnownIds, state: State, action: Action): State {
   switch (action.type) {
     case "hydrate": {
       // Load once only (React may run the mount effect twice in development).
@@ -59,7 +59,7 @@ function reducer(state: State, action: Action): State {
     case "sync":
       return { ...state, ids: action.ids };
     case "toggle": {
-      if (!KNOWN_IDS.has(action.id)) return state;
+      if (!known.has(action.id)) return state;
       const saved = state.ids.includes(action.id);
       return {
         ...state,
@@ -83,17 +83,22 @@ type SavedContextValue = {
 const SavedContext = createContext<SavedContextValue | null>(null);
 
 export function SavedProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, { ids: [], loaded: false });
+  const { byId: known } = useCatalog();
+  const boundReducer = useCallback(
+    (state: State, action: Action) => reducer(known, state, action),
+    [known],
+  );
+  const [state, dispatch] = useReducer(boundReducer, { ids: [], loaded: false });
 
   useEffect(() => {
-    dispatch({ type: "hydrate", ids: readStored() });
+    dispatch({ type: "hydrate", ids: readStored(known) });
     // Another tab changed the list.
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) dispatch({ type: "sync", ids: readStored() });
+      if (e.key === STORAGE_KEY) dispatch({ type: "sync", ids: readStored(known) });
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [known]);
 
   // Write on every change, only after loading (never overwrite the stored list with the empty one).
   useEffect(() => {

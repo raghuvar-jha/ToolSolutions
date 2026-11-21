@@ -2,8 +2,8 @@
 
 /**
  * Cart state (spec 008). Each line stores only lineId, productId, variantId and
- * quantity; name, image, price and stock are looked up from lib/Products.ts on
- * render. Persisted to localStorage ("cart-v1"). The server and the first client
+ * quantity; name, image, price and stock are looked up in the catalog (from the
+ * product repository via CatalogProvider) on render. Money is integer paise. Persisted to localStorage ("cart-v1"). The server and the first client
  * render see an empty cart; the stored cart loads after mount (hydration guard).
  */
 import {
@@ -15,11 +15,8 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import {
-  PRODUCT_DETAILS,
-  type ProductDetail,
-  type ProductVariant,
-} from "../Products";
+import { useCatalog } from "../catalog/catalog-context";
+import type { ProductDetail, ProductVariant } from "../catalog/types";
 
 const STORAGE_KEY = "cart-v1";
 
@@ -35,41 +32,43 @@ export type CartLine = {
 export type CartItem = CartLine & {
   product: ProductDetail;
   variant: ProductVariant | null;
+  /** Paise. */
   unitPrice: number;
   stock: number;
+  /** Paise. */
   lineTotal: number;
 };
+
+type Catalog = Map<string, ProductDetail>;
 
 /* Product lookups ---------------------------------------------------- */
 
 const lineIdOf = (productId: string, variantId: string | null) =>
   `${productId}:${variantId ?? ""}`;
 
-function lookup(productId: string, variantId: string | null) {
-  const product = PRODUCT_DETAILS.find((p) => p.id === productId);
+function lookup(catalog: Catalog, productId: string, variantId: string | null) {
+  const product = catalog.get(productId);
   if (!product) return null;
   if (product.variants.length === 0) {
     return variantId === null
-      ? { product, variant: null, unitPrice: product.price, stock: product.stock }
+      ? { product, variant: null, unitPrice: product.pricePaise, stock: product.stock }
       : null;
   }
   const variant = product.variants.find((v) => v.value === variantId);
   return variant
-    ? { product, variant, unitPrice: variant.price, stock: variant.stock }
+    ? { product, variant, unitPrice: variant.pricePaise, stock: variant.stock }
     : null;
 }
 
-const stockOf = (line: Pick<CartLine, "productId" | "variantId">) =>
-  lookup(line.productId, line.variantId)?.stock ?? 0;
+const stockOf = (catalog: Catalog, line: Pick<CartLine, "productId" | "variantId">) =>
+  lookup(catalog, line.productId, line.variantId)?.stock ?? 0;
 
 const clamp = (n: number, max: number) =>
   Math.max(1, Math.min(Math.floor(n), max));
 
-/** GST rate (%) if the product data has one; none do yet, so prices count as GST-inclusive. */
-const gstRateOf = (product: ProductDetail) => {
-  const rate = (product as ProductDetail & { gstRate?: number }).gstRate;
-  return typeof rate === "number" && rate > 0 ? rate : null;
-};
+/** GST rate in basis points, or null when the price includes GST (true for all products today). */
+const gstRateOf = (product: ProductDetail) =>
+  product.gstRateBps !== null && product.gstRateBps > 0 ? product.gstRateBps : null;
 
 /* Reducer ------------------------------------------------------------ */
 
@@ -85,7 +84,7 @@ type Action =
   | { type: "dismissNotice" };
 
 /** Keep only well-formed lines for products that still exist and are in stock. */
-function sanitize(stored: unknown): { lines: CartLine[]; dropped: boolean } {
+function sanitize(catalog: Catalog, stored: unknown): { lines: CartLine[]; dropped: boolean } {
   if (!Array.isArray(stored)) return { lines: [], dropped: false };
   const lines: CartLine[] = [];
   let dropped = false;
@@ -97,7 +96,7 @@ function sanitize(stored: unknown): { lines: CartLine[]; dropped: boolean } {
       (typeof r.variantId === "string" || r.variantId === null) &&
       typeof r.quantity === "number" &&
       Number.isFinite(r.quantity);
-    const stock = ok ? stockOf(r as CartLine) : 0;
+    const stock = ok ? stockOf(catalog, r as CartLine) : 0;
     if (!ok || stock <= 0) {
       dropped = true;
       continue;
@@ -110,8 +109,14 @@ function sanitize(stored: unknown): { lines: CartLine[]; dropped: boolean } {
   return { lines, dropped };
 }
 
-function addTo(lines: CartLine[], productId: string, variantId: string | null, quantity: number) {
-  const stock = stockOf({ productId, variantId });
+function addTo(
+  catalog: Catalog,
+  lines: CartLine[],
+  productId: string,
+  variantId: string | null,
+  quantity: number,
+) {
+  const stock = stockOf(catalog, { productId, variantId });
   if (stock <= 0 || quantity < 1) return lines;
   const lineId = lineIdOf(productId, variantId);
   const existing = lines.find((l) => l.lineId === lineId);
@@ -123,32 +128,35 @@ function addTo(lines: CartLine[], productId: string, variantId: string | null, q
   return [...lines, { lineId, productId, variantId, quantity: clamp(quantity, stock) }];
 }
 
-function reducer(state: State, action: Action): State {
+function reducer(catalog: Catalog, state: State, action: Action): State {
   switch (action.type) {
     case "hydrate": {
       // Load once only (React may run the mount effect twice in development).
       if (state.loaded) return state;
-      const { lines, dropped } = sanitize(action.stored);
+      const { lines, dropped } = sanitize(catalog, action.stored);
       // Anything added before the stored cart loaded is merged in, not lost.
       const merged = state.lines.reduce(
-        (acc, l) => addTo(acc, l.productId, l.variantId, l.quantity),
+        (acc, l) => addTo(catalog, acc, l.productId, l.variantId, l.quantity),
         lines,
       );
       return { lines: merged, loaded: true, removedUnavailable: dropped };
     }
     case "add":
-      return { ...state, lines: addTo(state.lines, action.productId, action.variantId, action.quantity) };
+      return {
+        ...state,
+        lines: addTo(catalog, state.lines, action.productId, action.variantId, action.quantity),
+      };
     case "update":
       return {
         ...state,
         lines: state.lines.map((l) =>
-          l.lineId === action.lineId ? { ...l, quantity: clamp(action.quantity, stockOf(l)) } : l,
+          l.lineId === action.lineId ? { ...l, quantity: clamp(action.quantity, stockOf(catalog, l)) } : l,
         ),
       };
     case "remove":
       return { ...state, lines: state.lines.filter((l) => l.lineId !== action.lineId) };
     case "restore": {
-      if (state.lines.some((l) => l.lineId === action.line.lineId) || stockOf(action.line) <= 0) {
+      if (state.lines.some((l) => l.lineId === action.line.lineId) || stockOf(catalog, action.line) <= 0) {
         return state;
       }
       const lines = [...state.lines];
@@ -177,10 +185,12 @@ type CartContextValue = {
   /** False until the stored cart has loaded (counts show 0 until then). */
   loaded: boolean;
   itemCount: number;
+  /** Paise. */
   subtotal: number;
-  /** GST amount; 0 while the data has no GST rates (prices are GST-inclusive). */
+  /** GST in paise; 0 while no product has a GST rate (prices are GST-inclusive). */
   gst: number;
   gstIncluded: boolean;
+  /** Paise. */
   total: number;
   /** "Some items were removed because they are no longer available." */
   removedUnavailable: boolean;
@@ -196,7 +206,12 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, {
+  const { byId: catalog } = useCatalog();
+  const boundReducer = useCallback(
+    (state: State, action: Action) => reducer(catalog, state, action),
+    [catalog],
+  );
+  const [state, dispatch] = useReducer(boundReducer, {
     lines: [],
     loaded: false,
     removedUnavailable: false,
@@ -227,18 +242,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const items = useMemo<CartItem[]>(
     () =>
       state.lines.flatMap((line) => {
-        const found = lookup(line.productId, line.variantId);
+        const found = lookup(catalog, line.productId, line.variantId);
         if (!found) return [];
         return [{ ...line, ...found, lineTotal: found.unitPrice * line.quantity }];
       }),
-    [state.lines],
+    [catalog, state.lines],
   );
 
   const totals = useMemo(() => {
     const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
     const gst = items.reduce((sum, i) => {
       const rate = gstRateOf(i.product);
-      return rate ? sum + Math.round((i.lineTotal * rate) / 100) : sum;
+      return rate ? sum + Math.round((i.lineTotal * rate) / 10_000) : sum;
     }, 0);
     const gstIncluded = items.every((i) => gstRateOf(i.product) === null);
     return {
@@ -252,14 +267,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (productId: string, variantId: string | null, quantity: number): AddResult => {
-      const stock = stockOf({ productId, variantId });
+      const stock = stockOf(catalog, { productId, variantId });
       const current =
         state.lines.find((l) => l.lineId === lineIdOf(productId, variantId))?.quantity ?? 0;
       const inCart = stock > 0 ? clamp(current + quantity, stock) : 0;
       dispatch({ type: "add", productId, variantId, quantity });
       return { added: Math.max(0, inCart - current), inCart, stock };
     },
-    [state.lines],
+    [catalog, state.lines],
   );
 
   const removeItem = useCallback(

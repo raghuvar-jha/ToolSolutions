@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { addressSchema, fieldErrors, type AddressField } from "@repo/shared/checkout";
 import { useCart } from "../../lib/cart/cart-context";
 import { BROWSER_ORDERS_KEY } from "../../lib/orders/order-repository";
-import { shippingQuote } from "../../lib/shipping";
+import { shippingQuotePaise } from "../../lib/shipping";
 import AddressForm, { ADDRESS_FIELDS, EMPTY_ADDRESS, type AddressValues } from "./address-form";
 import CheckoutSummary from "./checkout-summary";
 import PaymentOptions, { type PaymentChoice } from "./payment-options";
@@ -96,7 +96,8 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
   const fields = useRef(new Map<AddressField, HTMLElement>());
   const alertRef = useRef<HTMLDivElement>(null);
 
-  const codAvailable = cart.total <= config.codMax;
+  // cart.total is paise; codMax is rupees (COD_MAX_AMOUNT).
+  const codAvailable = cart.total <= config.codMax * 100;
   const [choice, setChoice] = useState<PaymentChoice | null>(null);
   // Default: online if offered, else COD; drop COD if the total goes over the limit.
   const method: PaymentChoice | null =
@@ -248,7 +249,7 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
     );
   }
 
-  const delivery = shippingQuote(cart.subtotal).kind === "free" ? "free" : "pending";
+  const delivery = shippingQuotePaise(cart.subtotal).kind === "free" ? "free" : "pending";
 
   return (
     <form id="checkout-form" noValidate onSubmit={onSubmit} className="mt-8 lg:mt-10">

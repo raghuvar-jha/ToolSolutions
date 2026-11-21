@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CATEGORIES } from "../../lib/categories";
+import { formatInr } from "../../lib/catalog/format";
 import {
-  PRICE_MAX,
   PRICE_MIN,
   PRICE_STEP,
   listingHref,
   type ListingFilters,
 } from "../../lib/listing";
-import { formatInr } from "../../lib/Products";
 
 export const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
@@ -24,14 +23,17 @@ export const CATEGORY_OPTIONS = [
 
 type PriceRangeProps = {
   id: string;
+  /** Rupees. */
   value: number;
+  /** Top of the slider (rupees). */
+  max: number;
   onChange: (value: number) => void;
   /** Called when the slider is released (pointer up, key up, blur). */
   onCommit?: () => void;
 };
 
 /** "Maximum Price" slider with the ₹min / ₹max labels (used by the sidebar and sheet). */
-export function PriceRange({ id, value, onChange, onCommit }: PriceRangeProps) {
+export function PriceRange({ id, value, max, onChange, onCommit }: PriceRangeProps) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
@@ -46,7 +48,7 @@ export function PriceRange({ id, value, onChange, onCommit }: PriceRangeProps) {
         id={id}
         type="range"
         min={PRICE_MIN}
-        max={PRICE_MAX}
+        max={max}
         step={PRICE_STEP}
         value={value}
         aria-valuetext={`Up to ${formatInr(value)}`}
@@ -58,7 +60,7 @@ export function PriceRange({ id, value, onChange, onCommit }: PriceRangeProps) {
       />
       <div className="mt-2 flex justify-between text-xs text-muted">
         <span>{formatInr(PRICE_MIN)}</span>
-        <span>{formatInr(PRICE_MAX)}</span>
+        <span>{formatInr(max)}</span>
       </div>
     </div>
   );
@@ -70,7 +72,7 @@ export function PriceRange({ id, value, onChange, onCommit }: PriceRangeProps) {
  */
 export default function FilterSidebar({ filters }: { filters: ListingFilters }) {
   const router = useRouter();
-  const urlMax = filters.max ?? PRICE_MAX;
+  const urlMax = filters.max ?? filters.priceMax;
   const [value, setValue] = useState(urlMax);
   // Follow the URL (back button, Clear All) without remounting the slider.
   const [seenMax, setSeenMax] = useState(urlMax);
@@ -80,7 +82,7 @@ export default function FilterSidebar({ filters }: { filters: ListingFilters }) 
   }
 
   const commit = () => {
-    const max = value >= PRICE_MAX ? null : value;
+    const max = value >= filters.priceMax ? null : value;
     if (max !== filters.max) {
       router.push(listingHref({ ...filters, max }), { scroll: false });
     }
@@ -129,6 +131,7 @@ export default function FilterSidebar({ filters }: { filters: ListingFilters }) 
         <PriceRange
           id="sidebar-price"
           value={value}
+          max={filters.priceMax}
           onChange={setValue}
           onCommit={commit}
         />

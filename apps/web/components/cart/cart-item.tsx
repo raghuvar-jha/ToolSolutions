@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { CircleAlert, RotateCcw, Trash2, Truck } from "lucide-react";
 import type { CartItem as CartItemData } from "../../lib/cart/cart-context";
-import { formatInr, productPageHref } from "../../lib/Products";
-import { DELIVERY_WINDOW_DAYS } from "../../lib/shipping";
+import { formatPaise, productPageHref } from "../../lib/catalog/format";
+import { DEFAULT_DELIVERY_DAYS, DELIVERY_WINDOW_DAYS } from "../../lib/shipping";
 import SaveButton from "../save-button";
 import QuantityStepper from "./quantity-stepper";
 
@@ -40,7 +40,7 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
   const { product, variant, quantity, unitPrice, lineTotal, stock } = item;
   const href = productPageHref(product.id);
   // Not in the data yet; the line stays hidden until it is.
-  const returnDays = (product as { returnDays?: number }).returnDays;
+  const { returnDays } = product;
 
   return (
     <article className="flex gap-4 rounded-card border border-line bg-surface p-4 shadow-sm lg:gap-6 lg:p-6">
@@ -87,9 +87,9 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
         <ul className="mt-3 space-y-1 text-sm">
           <li className="flex items-center gap-2 text-success">
             <Truck aria-hidden className="size-4 shrink-0" />
-            Arrives {arrivalRange(product.deliveryDays)}
+            Arrives {arrivalRange(product.deliveryDays ?? DEFAULT_DELIVERY_DAYS)}
           </li>
-          {returnDays !== undefined && (
+          {returnDays !== null && (
             <li className="flex items-center gap-2 text-muted">
               <RotateCcw aria-hidden className="size-4 shrink-0" />
               Free returns within {returnDays} days
@@ -99,9 +99,9 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
           <p className="flex min-w-32 flex-wrap items-baseline gap-x-2">
-            <span className="text-lg font-semibold text-brand-950">{formatInr(lineTotal)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatPaise(lineTotal)}</span>
             {quantity > 1 && (
-              <span className="text-sm text-muted">{formatInr(unitPrice)} each</span>
+              <span className="text-sm text-muted">{formatPaise(unitPrice)} each</span>
             )}
           </p>
           <QuantityStepper value={quantity} max={stock} onChange={onQuantity} label={product.name} />
