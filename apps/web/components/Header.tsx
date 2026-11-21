@@ -359,7 +359,7 @@ function DesktopCategoryNav() {
         <CategoryMenu label="More" slugs={overflow.map((c) => c.slug)} />
       )}
       <Link
-        href="/deals"
+        href="/products"
         className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-md text-base font-semibold text-brand-700 hover:text-brand-800 ${FOCUS_ON_LIGHT}`}
       >
         
