@@ -41,8 +41,9 @@ const DELIVERY_TIME = "1 Day";
 // Desktop nav shows this many categories inline; the rest go under "More".
 const VISIBLE_CATEGORIES = 6;
 
-// TODO: switch to a tel: link once the client provides the order phone number.
-const ORDER_NOW_HREF = "/contact";
+/** "Order now" calls the order line directly (client number). */
+const ORDER_PHONE = "+919811224990";
+const ORDER_PHONE_LABEL = "+91 98112 24990";
 
 /* ------------------------------------------------------------------ */
 /* Shared class names                                                  */
@@ -254,26 +255,32 @@ function AccountAction() {
   );
 }
 
-/** Mobile top bar: Login, or the first name and a Logout icon button (spec 013). */
+/**
+ * Mobile top bar: "Login", or an account icon and a Logout icon (spec 013).
+ * Icons only when logged in, so the bar fits next to the logo and "Order now"
+ * down to 320px; the first name is in the account link's accessible label.
+ */
 function MobileAccount() {
   const user = useSessionUser();
   const loginHref = useLoginHref();
-  const link = `flex shrink-0 items-center gap-1.5 rounded-md text-sm text-surface ${FOCUS_ON_DARK}`;
+  const icon = `grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-surface ${FOCUS_ON_DARK}`;
   if (!user) {
     return (
-      <Link href={loginHref} className={link}>
+      <Link
+        href={loginHref}
+        className={`flex shrink-0 items-center gap-1.5 rounded-md text-sm text-surface ${FOCUS_ON_DARK}`}
+      >
         <User aria-hidden className="size-4 text-footer-icon" />
         Login
       </Link>
     );
   }
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      <Link href="/account" className={`${link} min-w-0`}>
-        <User aria-hidden className="size-4 shrink-0 text-footer-icon" />
-        <span className="max-w-20 truncate">{user.firstName}</span>
+    <span className="flex shrink-0 items-center gap-1">
+      <Link href="/account" aria-label={`Account, ${user.firstName}`} title={user.firstName} className={icon}>
+        <User aria-hidden className="size-5 text-footer-icon" />
       </Link>
-      <LogoutButton label="Logout" className={`grid size-8 cursor-pointer place-items-center rounded-md text-surface ${FOCUS_ON_DARK}`}>
+      <LogoutButton label="Logout" className={icon}>
         <LogOut aria-hidden className="size-4" />
       </LogoutButton>
     </span>
@@ -447,8 +454,8 @@ function MobileCategoryStrip() {
                   aria-current={active ? "page" : undefined}
                   className={`flex min-w-14 flex-col items-center gap-1.5 rounded-card border-b-[3px] px-2 pt-1.5 pb-1.5 text-[13px] whitespace-nowrap text-text transition-colors ${FOCUS_ON_LIGHT} ${
                     active
-                      ? "border-brand-950 bg-surface/30 inset-shadow-sm inset-shadow-brand-950/15"
-                      : "border-transparent hover:bg-surface/20"
+                      ? ""
+                      : "border-transparent hover:bg-surface/10"
                   }`}
                 >
                   <Icon aria-hidden strokeWidth={1.5} className="size-7" />
@@ -497,15 +504,19 @@ export function SiteHeader() {
         <div className="bg-brand-950">
           <div className={`${CONTAINER} flex h-12 items-center justify-between gap-3`}>
             <Logo className="h-11" />
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2 min-[360px]:gap-3">
               <MobileAccount />
-              <Link
-                href={ORDER_NOW_HREF}
-                className={`flex shrink-0 items-center gap-1.5 rounded-md text-sm font-semibold text-surface uppercase ${FOCUS_ON_DARK}`}
+              {/* Calls the order line. Below 360px only the phone icon shows (label stays for screen readers). */}
+              <a
+                href={`tel:${ORDER_PHONE}`}
+                aria-label={`Order now, call ${ORDER_PHONE_LABEL}`}
+                className={`flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-surface uppercase ${FOCUS_ON_DARK}`}
               >
                 <Phone aria-hidden className="size-4 text-footer-icon" />
-                Order now
-              </Link>
+                <span aria-hidden className="hidden min-[360px]:inline">
+                  Order now
+                </span>
+              </a>
             </div>
           </div>
         </div>

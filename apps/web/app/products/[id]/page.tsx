@@ -8,6 +8,8 @@ import DeliveryBox from "../../../components/delivery-box";
 import ProductReviews from "../../../components/product-reviews";
 import SimilarProducts from "../../../components/similar-products";
 import ReviewComposer, { type ComposerState } from "../../../components/review-composer";
+import WhatsAppButton from "../../../components/whatsapp-button";
+import { productPageHref } from "../../../lib/catalog/format";
 import { getCurrentUser } from "../../../lib/auth/session";
 import { getProductById, getSimilarProducts } from "../../../lib/catalog/product-repository";
 import { getReviewStatus, getReviewsForProduct } from "../../../lib/reviews/review-service";
@@ -82,6 +84,8 @@ export default async function ProductPage({ params }: PageProps) {
       <Footer />
       {/* Mobile: room for the sticky buy bar so it never covers the footer. */}
       {product && <div aria-hidden className="h-16 lg:hidden" />}
+      {/* Spec 015: the chat message names this product and links to it. */}
+      {product && <WhatsAppButton product={{ name: product.name, path: productPageHref(product.id) }} aboveStickyBar />}
     </>
   );
 }

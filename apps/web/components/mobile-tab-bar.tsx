@@ -14,7 +14,8 @@ import {
 /**
  * Fixed bottom tab bar, mobile only (hidden from lg, where the desktop header
  * takes over). DESIGN.md §6: Home · Category · Notifications · Account · Cart.
- * Notifications and Account are display-only in v1 (§9), so they are not links.
+ * Notifications is display-only in v1 (§9), so it is not a link. Account links to
+ * /account now that accounts exist (spec 013).
  *
  * Sizes measured from the mobile mock: bar ≈59px + safe-area inset, 22px icons,
  * 11px/500 labels, items spread with equal gaps and 20px side padding.
@@ -38,7 +39,13 @@ const TABS: Tab[] = [
     match: (p) => p.startsWith("/products") || p.startsWith("/category"),
   },
   { label: "Notifications", icon: Bell },
-  { label: "Account", icon: User },
+  // Logged-out users are sent on to /login?next=/account by the account page (spec 013).
+  {
+    label: "Account",
+    icon: User,
+    href: "/account",
+    match: (p) => p.startsWith("/account"),
+  },
   {
     label: "Cart",
     icon: ShoppingCart,
@@ -80,7 +87,7 @@ export default function MobileTabBar() {
                   {content}
                 </Link>
               ) : (
-                // Display-only in v1 (no notifications or accounts yet).
+                // Display-only in v1 (no notifications yet).
                 <span className={`${ITEM} text-body`}>{content}</span>
               )}
             </li>

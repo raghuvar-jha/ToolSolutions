@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import MobileTabBar from "../components/mobile-tab-bar";
+import WhatsAppButtonSlot from "../components/whatsapp-button-slot";
 import { CartProvider } from "../lib/cart/cart-context";
 import { CatalogProvider } from "../lib/catalog/catalog-context";
 import { getAllProducts } from "../lib/catalog/product-repository";
@@ -52,6 +53,7 @@ export default async function RootLayout({
             <CartProvider>
               <SavedProvider initialIds={savedIds} loggedIn={user !== null}>
                 {children}
+                <WhatsAppButtonSlot />
                 <MobileTabBar />
               </SavedProvider>
             </CartProvider>
