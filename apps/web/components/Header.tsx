@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import CategoryMenu from "./CategoryMenu";
 import CountBadge from "./count-badge";
+import NotificationBell from "./notifications/notification-bell";
 import { useCart } from "../lib/cart/cart-context";
 import { CATEGORIES, categoryHref } from "../lib/categories";
 import { useSaved } from "../lib/saved/saved-context";
@@ -295,6 +296,8 @@ function HeaderActions() {
   const { count: savedCount, loaded: savedLoaded } = useSaved();
   return (
     <div className="flex shrink-0 items-center gap-7 text-surface">
+      {/* Spec 016: unread count from the server (root layout), refreshed every 60s. */}
+      <NotificationBell variant="header" />
       <Link
         href="/saved"
         aria-label={`Saved, ${itemsLabel(savedCount)}`}

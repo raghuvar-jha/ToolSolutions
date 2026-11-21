@@ -13,6 +13,7 @@ import { averageRating } from "../catalog/reviews";
 import { SHOW_SAMPLE_REVIEWS } from "../catalog/config";
 import type { ProductReview } from "../catalog/types";
 import { db } from "../db";
+import { notifyReviewPublished } from "../notifications/notification-service";
 
 export const reviewInputSchema = z.object({
   rating: z.number().int().min(1, "Choose a rating").max(5, "Choose a rating"),
@@ -126,10 +127,21 @@ export async function saveReview(
     authorName: user.name,
     verifiedPurchase: true,
   };
-  await db().review.upsert({
-    where: { userId_productId: { userId: user.id, productId } },
-    create: { ...data, userId: user.id, productId, isSample: false, status: "published" },
-    update: data,
+  await db().$transaction(async (tx) => {
+    const existing = await tx.review.findUnique({
+      where: { userId_productId: { userId: user.id, productId } },
+      select: { id: true },
+    });
+    if (existing) {
+      await tx.review.update({ where: { id: existing.id }, data });
+      return;
+    }
+    const created = await tx.review.create({
+      data: { ...data, userId: user.id, productId, isSample: false, status: "published" },
+      select: { id: true },
+    });
+    // Spec 016: notify on first publish only; edits don't send another notification.
+    await notifyReviewPublished(created.id, tx);
   });
   return { ok: true };
 }

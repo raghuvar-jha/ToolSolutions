@@ -13,6 +13,7 @@ import type { OrderRequest } from "@repo/shared/checkout";
 import { Prisma, type Order, type OrderItem } from "../../generated/prisma/client";
 import { formatInr } from "../catalog/format";
 import { db } from "../db";
+import { notifyOrderPlaced, removeOrderPlacedNotification } from "../notifications/notification-service";
 import { codAllowed, getPublicPaymentConfig, razorpayKeys } from "../payments";
 import { DEFAULT_DELIVERY_DAYS } from "../shipping";
 
@@ -203,6 +204,10 @@ export async function placeOrder(input: {
           include: { items: true },
         });
 
+        // Spec 016: same transaction, so an order never exists without its notification
+        // and a rejected order creates none.
+        await notifyOrderPlaced(created.id, tx);
+
         // First order: keep its address as the user's default.
         if ((await tx.address.count({ where: { userId } })) === 0) {
           await tx.address.create({
@@ -309,6 +314,8 @@ async function cancelAndRestock(order: OrderWithItems) {
       }
     }
     await tx.order.update({ where: { id: order.id }, data: { status: "cancelled", paymentStatus: "failed" } });
+    // The shopper was shown an error, so the order never went through for them (spec 016, D2).
+    await removeOrderPlacedNotification(order.id, tx);
   });
 }
 
