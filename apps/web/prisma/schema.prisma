@@ -1,4 +1,5 @@
-// Catalog (spec 012), accounts (spec 013), orders, addresses and saved items (spec 014).
+// Catalog (spec 012), accounts (spec 013), orders, addresses and saved items (spec 014),
+// notifications (spec 016).
 //
 // Money is integer paise (₹1 = 100). GST is basis points (18% = 1800).
 // Neon PostgreSQL. Connection URLs come from prisma.config.ts (DIRECT_URL) and lib/prisma-client.ts (DATABASE_URL).
@@ -57,6 +58,7 @@ model Product {
   reviews            Review[]
   orderItems         OrderItem[]
   savedBy            SavedItem[]
+  notifications      Notification[]
 
   @@index([categoryId])
 }
@@ -111,22 +113,24 @@ model Review {
  */
 
 model User {
-  id              String      @id @default(cuid())
-  name            String
+  id                String             @id @default(cuid())
+  name              String
   /// Always stored lowercase.
-  email           String      @unique
-  phone           String?
+  email             String             @unique
+  phone             String?
   /// argon2id hash. The password itself is never stored.
-  passwordHash    String
+  passwordHash      String
   /// Unused for now.
-  emailVerifiedAt DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  sessions        Session[]
-  reviews         Review[]
-  addresses       Address[]
-  orders          Order[]
-  savedItems      SavedItem[]
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  sessions          Session[]
+  reviews           Review[]
+  addresses         Address[]
+  orders            Order[]
+  savedItems        SavedItem[]
+  notifications     Notification[]
+  notificationReads NotificationRead[]
 }
 
 model Session {
@@ -196,12 +200,12 @@ enum PaymentStatus {
 }
 
 model Order {
-  id                String        @id @default(cuid())
+  id                String         @id @default(cuid())
   /// "TS-20261120-0001": per-day counter in IST (OrderCounter).
-  orderNumber       String        @unique
+  orderNumber       String         @unique
   userId            String
-  user              User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  status            OrderStatus   @default(placed)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status            OrderStatus    @default(placed)
   paymentMethod     PaymentMethod
   paymentStatus     PaymentStatus
   subtotalPaise     Int
@@ -220,12 +224,13 @@ model Order {
   instructions      String?
   estimatedDelivery DateTime
   /// Live mode only.
-  razorpayOrderId   String?       @unique
+  razorpayOrderId   String?        @unique
   razorpayPaymentId String?
-  idempotencyKey    String        @unique
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  idempotencyKey    String         @unique
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   items             OrderItem[]
+  notifications     Notification[]
 
   @@index([userId, createdAt])
 }
@@ -267,4 +272,52 @@ model SavedItem {
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
+}
+
+/**
+ * Notifications (spec 016) -------------------------------------------
+ * Created only by lib/notifications/notification-service.ts.
+ */
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_STATUS
+  REVIEW_PUBLISHED
+  NEW_PRODUCT
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  type      NotificationType
+  /// Max 120 characters (checked by the service).
+  title     String
+  /// Max 300 characters (checked by the service).
+  body      String?
+  /// Relative path inside the site, e.g. "/orders/abc". Validated by the service.
+  link      String
+  /// Set for personal notifications; null for broadcasts (every user).
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product?           @relation(fields: [productId], references: [id], onDelete: SetNull)
+  createdAt DateTime           @default(now())
+  reads     NotificationRead[]
+
+  @@index([userId, createdAt])
+  @@index([orderId])
+}
+
+/// Read state for both personal and broadcast notifications.
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId])
 }

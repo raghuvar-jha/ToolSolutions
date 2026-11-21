@@ -10,11 +10,12 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react";
+import NotificationBell from "./notifications/notification-bell";
 
 /**
  * Fixed bottom tab bar, mobile only (hidden from lg, where the desktop header
  * takes over). DESIGN.md §6: Home · Category · Notifications · Account · Cart.
- * Notifications is display-only in v1 (§9), so it is not a link. Account links to
+ * Notifications opens the notification sheet (spec 016). Account links to
  * /account now that accounts exist (spec 013).
  *
  * Sizes measured from the mobile mock: bar ≈59px + safe-area inset, 22px icons,
@@ -28,6 +29,8 @@ type Tab = {
   href?: string;
   /** Route prefixes that make this tab active. */
   match?: (path: string) => boolean;
+  /** Rendered as the notification bell (badge + sheet) instead of a link. */
+  bell?: true;
 };
 
 const TABS: Tab[] = [
@@ -38,7 +41,7 @@ const TABS: Tab[] = [
     href: "/products",
     match: (p) => p.startsWith("/products") || p.startsWith("/category"),
   },
-  { label: "Notifications", icon: Bell },
+  { label: "Notifications", icon: Bell, bell: true },
   // Logged-out users are sent on to /login?next=/account by the account page (spec 013).
   {
     label: "Account",
@@ -66,7 +69,14 @@ export default function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="flex h-[59px] items-start justify-between px-5 pt-[11px]">
-        {TABS.map(({ label, icon: Icon, href, match }) => {
+        {TABS.map(({ label, icon: Icon, href, match, bell }) => {
+          if (bell) {
+            return (
+              <li key={label}>
+                <NotificationBell variant="tab" />
+              </li>
+            );
+          }
           const active = !!match?.(pathname);
           const content = (
             <>
@@ -87,7 +97,7 @@ export default function MobileTabBar() {
                   {content}
                 </Link>
               ) : (
-                // Display-only in v1 (no notifications yet).
+                // Display-only tab.
                 <span className={`${ITEM} text-body`}>{content}</span>
               )}
             </li>

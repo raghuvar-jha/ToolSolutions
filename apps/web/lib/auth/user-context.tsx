@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * The logged-in user's first name for client components (the header).
- * Read on the server by the root layout; nothing is stored in the browser.
+ * The logged-in user's first name and unread notification count for client
+ * components (the header and the notification bell, spec 016). Read on the
+ * server by the root layout; nothing is stored in the browser.
  */
 import { createContext, useContext, type ReactNode } from "react";
 
-export type SessionUser = { firstName: string } | null;
+export type SessionUser = { firstName: string; unreadNotifications: number } | null;
 
 const UserContext = createContext<SessionUser>(null);
 
