@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CATEGORIES } from "../lib/categories";
 import type { ProductSummary } from "../lib/catalog/types";
 import CategoryChips, { type Chip } from "./category-chips";
@@ -26,7 +26,7 @@ export default function ProductGrid({ title, products }: ProductGridProps) {
     selected === ALL
       ? products
       : products.filter((p) => p.category === selected);
-  const headingId = "best-sellers-heading";
+  const headingId = useId();
 
   return (
     <section aria-labelledby={headingId} className="py-6 lg:py-10">
