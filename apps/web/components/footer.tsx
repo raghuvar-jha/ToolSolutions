@@ -16,51 +16,11 @@ import {
   Truck,
   type LucideIcon,
 } from "lucide-react";
+import { LINK_GROUPS, type LinkGroup } from "../lib/footer-links";
 
 /* ------------------------------------------------------------------ */
 /* Data (layout from docs/design/reference/Footer.png)                 */
 /* ------------------------------------------------------------------ */
-
-type FooterLink = { label: string; href: string };
-type LinkGroup = { title: string; links: FooterLink[] };
-
-// Destination pages don't exist yet, so every link is "#" for now.
-const LINK_GROUPS: LinkGroup[] = [
-  {
-    title: "Company",
-    links: [
-      { label: "About us", href: "#" },
-      { label: "Reviews", href: "#" },
-      { label: "Privacy policy", href: "#" },
-      { label: "Cookie policy", href: "#" },
-      { label: "Terms & conditions", href: "#" },
-      { label: "Acceptable use policy", href: "#" },
-      { label: "Sitemap", href: "#" },
-    ],
-  },
-  {
-    title: "Shipping services",
-    links: [
-      { label: "Ship a package", href: "#" },
-      { label: "Track a package", href: "#" },
-      { label: "Domestic shipping", href: "#" },
-      { label: "International shipping", href: "#" },
-      { label: "Bulk shipping", href: "#" },
-      { label: "Couriers", href: "#" },
-      { label: "Delivery services", href: "#" },
-    ],
-  },
-  {
-    title: "Customers",
-    links: [
-      { label: "Log in", href: "#" },
-      { label: "Register", href: "#" },
-      { label: "Contact us", href: "#" },
-      { label: "Support hub", href: "#" },
-      { label: "Preferences", href: "#" },
-    ],
-  },
-];
 
 // Our own rating (DESIGN.md "Customer Reviews": 4.8). Not a third-party score.
 const RATING = { score: 4.8, outOf: 5, label: "Customer rating" };
