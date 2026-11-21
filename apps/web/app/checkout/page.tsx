@@ -4,6 +4,7 @@ import SiteHeader from "../../components/Header";
 import Footer from "../../components/footer";
 import CheckoutForm from "../../components/checkout/checkout-form";
 import Stepper from "../../components/checkout/stepper";
+import { getAddresses } from "../../lib/account/address-service";
 import { requireUser } from "../../lib/auth/session";
 import { getPublicPaymentConfig } from "../../lib/payments";
 
@@ -30,7 +31,9 @@ export const metadata: Metadata = { title: "Checkout" };
  */
 export default async function CheckoutPage({ searchParams }: PageProps) {
   await connection(); // read env per request, not at build time
-  await requireUser(await checkoutPath(searchParams)); // spec 013: login required
+  const user = await requireUser(await checkoutPath(searchParams)); // spec 013: login required
+  // Spec 014: the user's saved addresses (default first) and email for the address form.
+  const addresses = (await getAddresses(user.id)).map(({ id, isDefault, ...a }) => ({ ...a, id, isDefault }));
   const { mode, codMax, razorpayAvailable } = getPublicPaymentConfig();
 
   return (
@@ -39,7 +42,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
       <main className={`${CONTAINER} py-6 lg:py-10`}>
         <h1 className="sr-only">Checkout</h1>
         <Stepper current="Address" />
-        <CheckoutForm config={{ mode, codMax, razorpayAvailable }} />
+        <CheckoutForm config={{ mode, codMax, razorpayAvailable }} addresses={addresses} email={user.email} />
       </main>
       <Footer />
       {/* Mobile: room for the sticky pay bar so it never covers the footer. */}

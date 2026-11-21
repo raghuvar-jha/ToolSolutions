@@ -34,7 +34,7 @@ type CartItemProps = {
 
 /**
  * One cart line: image, name, option, stock warning, delivery, returns,
- * line total, stepper, Save (display-only in v1) and remove.
+ * line total, stepper, Save (moves the product to the saved list) and remove.
  */
 export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) {
   const { product, variant, quantity, unitPrice, lineTotal, stock } = item;
@@ -73,8 +73,8 @@ export default function CartItem({ item, onQuantity, onRemove }: CartItemProps) 
               </p>
             )}
           </div>
-          {/* Saves the product for later; it stays in the cart. */}
-          <SaveButton productId={product.id} productName={product.name} variant="text" />
+          {/* Saves the product to the saved list and removes the line (spec 014). */}
+          <SaveButton productId={product.id} productName={product.name} variant="text" onSaved={onRemove} />
         </div>
 
         {stock <= LOW_STOCK && (

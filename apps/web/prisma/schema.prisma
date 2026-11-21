@@ -1,4 +1,4 @@
-// Catalog (spec 012) and accounts (spec 013). Orders come in a later spec.
+// Catalog (spec 012), accounts (spec 013), orders, addresses and saved items (spec 014).
 //
 // Money is integer paise (₹1 = 100). GST is basis points (18% = 1800).
 // Neon PostgreSQL. Connection URLs come from prisma.config.ts (DIRECT_URL) and lib/prisma-client.ts (DATABASE_URL).
@@ -55,6 +55,8 @@ model Product {
   updatedAt          DateTime         @updatedAt
   variants           ProductVariant[]
   reviews            Review[]
+  orderItems         OrderItem[]
+  savedBy            SavedItem[]
 
   @@index([categoryId])
 }
@@ -72,6 +74,8 @@ model ProductVariant {
   pricePaise Int?
   stock      Int     @default(0)
   sortOrder  Int     @default(0)
+
+  orderItems OrderItem[]
 
   @@unique([productId, value])
 }
@@ -107,19 +111,22 @@ model Review {
  */
 
 model User {
-  id              String    @id @default(cuid())
+  id              String      @id @default(cuid())
   name            String
   /// Always stored lowercase.
-  email           String    @unique
+  email           String      @unique
   phone           String?
   /// argon2id hash. The password itself is never stored.
   passwordHash    String
   /// Unused for now.
   emailVerifiedAt DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
   sessions        Session[]
   reviews         Review[]
+  addresses       Address[]
+  orders          Order[]
+  savedItems      SavedItem[]
 }
 
 model Session {
@@ -142,4 +149,122 @@ model LoginAttempt {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
+}
+
+/**
+ * Orders, addresses, saved items (spec 014) --------------------------
+ */
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName     String
+  phone        String
+  line1        String
+  line2        String?
+  city         String
+  state        String
+  pincode      String
+  instructions String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum OrderStatus {
+  placed
+  confirmed
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  cod
+  razorpay
+}
+
+enum PaymentStatus {
+  pending
+  demo
+  paid
+  failed
+  refunded
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  /// "TS-20261120-0001": per-day counter in IST (OrderCounter).
+  orderNumber       String        @unique
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status            OrderStatus   @default(placed)
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus
+  subtotalPaise     Int
+  gstPaise          Int
+  deliveryPaise     Int
+  totalPaise        Int
+  /// Address snapshot: later address edits never change a placed order.
+  fullName          String
+  phone             String
+  email             String
+  line1             String
+  line2             String?
+  city              String
+  state             String
+  pincode           String
+  instructions      String?
+  estimatedDelivery DateTime
+  /// Live mode only.
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?
+  idempotencyKey    String        @unique
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  items             OrderItem[]
+
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id                  String          @id @default(cuid())
+  orderId             String
+  order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variantId           String?
+  variant             ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  /// Snapshots keep the order correct if the product changes later.
+  productNameSnapshot String
+  variantNameSnapshot String?
+  imageSnapshot       String?
+  unitPricePaise      Int
+  quantity            Int
+  /// null = price included GST.
+  gstRateBps          Int?
+  lineTotalPaise      Int
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+/// Per-day order number counter (key: "20261120", IST).
+model OrderCounter {
+  day   String @id
+  value Int
+}
+
+model SavedItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }

@@ -6,6 +6,7 @@ import { CatalogProvider } from "../lib/catalog/catalog-context";
 import { getAllProducts } from "../lib/catalog/product-repository";
 import { getCurrentUser } from "../lib/auth/session";
 import { UserProvider } from "../lib/auth/user-context";
+import { getSavedProductIds } from "../lib/saved/saved-service";
 import { SavedProvider } from "../lib/saved/saved-context";
 import "./globals.css";
 
@@ -38,6 +39,8 @@ export default async function RootLayout({
   // The header shows the first name only; nothing else about the user reaches the browser here.
   const [catalog, user] = await Promise.all([getAllProducts(), getCurrentUser()]);
   const sessionUser = user ? { firstName: user.name.trim().split(/\s+/)[0] ?? user.name } : null;
+  // Saved product ids for the hearts and the header count (only this user's).
+  const savedIds = user ? await getSavedProductIds(user.id) : [];
 
   return (
     <html lang="en" className={poppins.variable}>
@@ -47,7 +50,7 @@ export default async function RootLayout({
         <UserProvider user={sessionUser}>
           <CatalogProvider products={catalog}>
             <CartProvider>
-              <SavedProvider>
+              <SavedProvider initialIds={savedIds} loggedIn={user !== null}>
                 {children}
                 <MobileTabBar />
               </SavedProvider>

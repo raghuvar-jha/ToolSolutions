@@ -1,134 +1,115 @@
 "use client";
 
 /**
- * Saved items (wishlist). Stores only product ids, newest first, in
- * localStorage ("saved-v1"). Like the cart, the server and the first client
- * render see an empty list; the stored list loads after mount. Changes made in
- * another tab are picked up through the "storage" event.
+ * Saved items (spec 014). The list lives in the database (SavedItem). The root
+ * layout loads the user's saved product ids on the server and passes them in;
+ * toggles update the screen at once and are saved by a server action. Logged-out
+ * users who press a heart go to /login?next=<the product page>.
  */
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useReducer,
+  useState,
+  useTransition,
   type ReactNode,
 } from "react";
-import { useCatalog } from "../catalog/catalog-context";
-
-const STORAGE_KEY = "saved-v1";
-
-type KnownIds = { has: (id: string) => boolean };
-
-/** Keep known product ids only, once each, in stored order. */
-function sanitize(known: KnownIds, stored: unknown): string[] {
-  if (!Array.isArray(stored)) return [];
-  const ids: string[] = [];
-  for (const id of stored) {
-    if (typeof id === "string" && known.has(id) && !ids.includes(id)) ids.push(id);
-  }
-  return ids;
-}
-
-function readStored(known: KnownIds): string[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return sanitize(known, raw ? JSON.parse(raw) : []);
-  } catch {
-    return [];
-  }
-}
-
-type State = { ids: string[]; loaded: boolean };
-
-type Action =
-  | { type: "hydrate"; ids: string[] }
-  | { type: "sync"; ids: string[] }
-  | { type: "toggle"; id: string };
-
-function reducer(known: KnownIds, state: State, action: Action): State {
-  switch (action.type) {
-    case "hydrate": {
-      // Load once only (React may run the mount effect twice in development).
-      if (state.loaded) return state;
-      // Anything saved before the stored list loaded is kept.
-      const early = state.ids.filter((id) => !action.ids.includes(id));
-      return { ids: [...early, ...action.ids], loaded: true };
-    }
-    case "sync":
-      return { ...state, ids: action.ids };
-    case "toggle": {
-      if (!known.has(action.id)) return state;
-      const saved = state.ids.includes(action.id);
-      return {
-        ...state,
-        ids: saved ? state.ids.filter((id) => id !== action.id) : [action.id, ...state.ids],
-      };
-    }
-  }
-}
+import { productPageHref } from "../catalog/format";
+import { setProductSaved } from "./actions";
 
 type SavedContextValue = {
   /** Saved product ids, newest first. */
   ids: string[];
-  /** False until the stored list has loaded (count is 0 until then). */
+  /** Always true: the list comes with the page. Kept for the header badge. */
   loaded: boolean;
   count: number;
   isSaved: (id: string) => boolean;
   /** Saves the product, or removes it if it is already saved. Returns true when now saved. */
   toggle: (id: string) => boolean;
+  /** Saves (never un-saves) the product. Used by the cart's "Save" button. */
+  save: (id: string) => Promise<boolean>;
 };
 
 const SavedContext = createContext<SavedContextValue | null>(null);
 
-export function SavedProvider({ children }: { children: ReactNode }) {
-  const { byId: known } = useCatalog();
-  const boundReducer = useCallback(
-    (state: State, action: Action) => reducer(known, state, action),
-    [known],
+export function SavedProvider({
+  initialIds,
+  loggedIn,
+  children,
+}: {
+  initialIds: string[];
+  loggedIn: boolean;
+  children: ReactNode;
+}) {
+  const router = useRouter();
+  const [ids, setIds] = useState(initialIds);
+  // Follow the server's list when it changes (login, logout, another tab after navigation).
+  const [seen, setSeen] = useState(initialIds);
+  if (seen !== initialIds) {
+    setSeen(initialIds);
+    setIds(initialIds);
+  }
+  const [, startTransition] = useTransition();
+
+  const goToLogin = useCallback(
+    (id: string) => router.push(`/login?next=${encodeURIComponent(productPageHref(id))}`),
+    [router],
   );
-  const [state, dispatch] = useReducer(boundReducer, { ids: [], loaded: false });
 
-  useEffect(() => {
-    dispatch({ type: "hydrate", ids: readStored(known) });
-    // Another tab changed the list.
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) dispatch({ type: "sync", ids: readStored(known) });
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [known]);
-
-  // Write on every change, only after loading (never overwrite the stored list with the empty one).
-  useEffect(() => {
-    if (!state.loaded) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ids));
-    } catch {
-      // Storage unavailable or full: the list still works for this visit.
-    }
-  }, [state.ids, state.loaded]);
-
-  const isSaved = useCallback((id: string) => state.ids.includes(id), [state.ids]);
+  const persist = useCallback(
+    async (id: string, saved: boolean): Promise<boolean> => {
+      const result = await setProductSaved(id, saved).catch(() => null);
+      if (!result || !result.ok) {
+        // Put the heart back the way it was.
+        setIds((list) => (saved ? list.filter((x) => x !== id) : list.includes(id) ? list : [id, ...list]));
+        if (result && !result.ok && result.reason === "login") goToLogin(id);
+        return false;
+      }
+      return result.saved;
+    },
+    [goToLogin],
+  );
 
   const toggle = useCallback(
     (id: string) => {
-      dispatch({ type: "toggle", id });
-      return !state.ids.includes(id);
+      if (!loggedIn) {
+        goToLogin(id);
+        return false;
+      }
+      const saved = !ids.includes(id);
+      setIds((list) => (saved ? [id, ...list.filter((x) => x !== id)] : list.filter((x) => x !== id)));
+      startTransition(async () => {
+        await persist(id, saved);
+      });
+      return saved;
     },
-    [state.ids],
+    [ids, loggedIn, goToLogin, persist],
+  );
+
+  const save = useCallback(
+    async (id: string) => {
+      if (!loggedIn) {
+        goToLogin(id);
+        return false;
+      }
+      setIds((list) => [id, ...list.filter((x) => x !== id)]);
+      return persist(id, true);
+    },
+    [loggedIn, goToLogin, persist],
   );
 
   const value = useMemo<SavedContextValue>(
     () => ({
-      ids: state.ids,
-      loaded: state.loaded,
-      count: state.loaded ? state.ids.length : 0,
-      isSaved,
+      ids,
+      loaded: true,
+      count: ids.length,
+      isSaved: (id) => ids.includes(id),
       toggle,
+      save,
     }),
-    [state.ids, state.loaded, isSaved, toggle],
+    [ids, toggle, save],
   );
 
   return <SavedContext.Provider value={value}>{children}</SavedContext.Provider>;
