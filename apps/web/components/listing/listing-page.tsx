@@ -5,15 +5,15 @@ import FilterSheet from "./filter-sheet";
 import FilterSidebar from "./filter-sidebar";
 import ProductGrid from "./product-grid";
 import SearchBar from "./search-bar";
+import type { CatalogCategory } from "../../lib/catalog/types";
 import {
-  LISTING_PRODUCTS,
   applyFilters,
   countText,
-  getCategory,
   hasNarrowingFilters,
   listingHref,
   listingTitle,
   type ListingFilters,
+  type ListingProduct,
 } from "../../lib/listing";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
@@ -23,11 +23,20 @@ const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
  * Shared page for /products and /category/[slug] (spec 007): heading + count,
  * filter sidebar (desktop) or bottom sheet (mobile), search bar, product grid.
  */
-export default function ListingPage({ filters }: { filters: ListingFilters }) {
-  const category = filters.category ? getCategory(filters.category) : null;
+type ListingPageProps = {
+  filters: ListingFilters;
+  /** Every active product, from the product repository. */
+  products: ListingProduct[];
+  categories: CatalogCategory[];
+};
+
+export default function ListingPage({ filters, products: all, categories }: ListingPageProps) {
+  const category = filters.category
+    ? categories.find((c) => c.slug === filters.category)
+    : null;
   const missing = filters.category !== null && !category;
 
-  const products = missing ? [] : applyFilters(LISTING_PRODUCTS, filters);
+  const products = missing ? [] : applyFilters(all, filters, categories);
   const count = products.length;
   // "Clear filters": drop search + price first; if only the category is left, go to all products.
   const clearHref = hasNarrowingFilters(filters)

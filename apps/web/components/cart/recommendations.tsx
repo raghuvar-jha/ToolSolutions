@@ -1,4 +1,6 @@
-import { LISTING_PRODUCTS } from "../../lib/listing";
+"use client";
+
+import { useCatalog } from "../../lib/catalog/catalog-context";
 import ProductCard from "../product-card";
 
 const LIMIT = 5;
@@ -17,7 +19,8 @@ type RecommendationsProps = {
  * Hidden when nothing is left to show.
  */
 export default function Recommendations({ title, excludeIds, categories }: RecommendationsProps) {
-  const pool = LISTING_PRODUCTS.filter((p) => !excludeIds.includes(p.id));
+  const { summaries } = useCatalog();
+  const pool = summaries.filter((p) => !excludeIds.includes(p.id));
   const picks = [
     ...pool.filter((p) => categories.includes(p.category)),
     ...pool.filter((p) => !categories.includes(p.category)),

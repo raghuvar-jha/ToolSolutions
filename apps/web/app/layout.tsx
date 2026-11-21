@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import MobileTabBar from "../components/mobile-tab-bar";
 import { CartProvider } from "../lib/cart/cart-context";
+import { CatalogProvider } from "../lib/catalog/catalog-context";
+import { getAllProducts } from "../lib/catalog/product-repository";
 import { SavedProvider } from "../lib/saved/saved-context";
 import "./globals.css";
 
@@ -25,22 +27,27 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Cart, saved items and recommendations look products up in this catalog.
+  const catalog = await getAllProducts();
+
   return (
     <html lang="en" className={poppins.variable}>
       {/* Mobile: bottom padding so the fixed tab bar never covers content. */}
       <body className="pb-[calc(59px+env(safe-area-inset-bottom))] lg:pb-0">
         {/* Shared cart and saved-items state for the header, cards, product page and cart page. */}
-        <CartProvider>
-          <SavedProvider>
-            {children}
-            <MobileTabBar />
-          </SavedProvider>
-        </CartProvider>
+        <CatalogProvider products={catalog}>
+          <CartProvider>
+            <SavedProvider>
+              {children}
+              <MobileTabBar />
+            </SavedProvider>
+          </CartProvider>
+        </CatalogProvider>
       </body>
     </html>
   );

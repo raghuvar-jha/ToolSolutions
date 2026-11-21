@@ -1,47 +1,24 @@
 /**
- * Product listing page (spec 007): the product list, URL filters
- * (category, q, max, sort), filtering, sorting and the delivery text.
+ * Product listing page (spec 007): URL filters (category, q, max, sort),
+ * filtering, sorting and the delivery text. Products come from the product
+ * repository (spec 012) and are passed in.
  * Filters live in the URL so refresh, back and shared links keep the results.
  */
-import { CATEGORIES, categoryHref } from "./categories";
-import {
-  BEST_SELLERS,
-  PRODUCT_DETAILS,
-  toCardProduct,
-  type BestSellerProduct,
-} from "./Products";
+import type { CatalogCategory, ProductSummary } from "./catalog/types";
+import { categoryHref } from "./categories";
 
-export type ListingProduct = BestSellerProduct & { deliveryDays?: number };
+export type ListingProduct = ProductSummary;
 
-/**
- * Every product in lib/Products.ts once (BEST_SELLERS repeats some IDs),
- * in data order. deliveryDays comes only from the product-page data, so
- * products without it never show a delivery time.
- */
-export const LISTING_PRODUCTS: ListingProduct[] = (() => {
-  const details = new Map(PRODUCT_DETAILS.map((d) => [d.id, d]));
-  const byId = new Map<string, ListingProduct>();
-  for (const p of BEST_SELLERS) {
-    if (!byId.has(p.id)) {
-      byId.set(p.id, { ...p, deliveryDays: details.get(p.id)?.deliveryDays });
-    }
-  }
-  for (const d of PRODUCT_DETAILS) {
-    if (!byId.has(d.id)) {
-      byId.set(d.id, { ...toCardProduct(d), deliveryDays: d.deliveryDays });
-    }
-  }
-  return [...byId.values()];
-})();
-
-/* Price slider ------------------------------------------------------ */
+/* Price slider (whole rupees, like the ?max= URL value) ------------- */
 
 export const PRICE_MIN = 500;
 const PRICE_ROUND = 500;
 /** Highest price in the data, rounded up to the next ₹500 (₹4,899 → ₹5,000). */
-export const PRICE_MAX =
-  Math.ceil(Math.max(...LISTING_PRODUCTS.map((p) => p.price)) / PRICE_ROUND) *
-  PRICE_ROUND;
+export const priceMaxOf = (products: Pick<ProductSummary, "pricePaise">[]) =>
+  Math.max(
+    PRICE_MIN,
+    Math.ceil(Math.max(0, ...products.map((p) => p.pricePaise)) / 100 / PRICE_ROUND) * PRICE_ROUND,
+  );
 export const PRICE_STEP = 100;
 
 /* Sort -------------------------------------------------------------- */
@@ -65,9 +42,11 @@ export type ListingFilters = {
   category: string | null;
   /** Search text (trimmed); "" = no search. */
   q: string;
-  /** Maximum price; null = no limit (slider at the top). */
+  /** Maximum price in rupees; null = no limit (slider at the top). */
   max: number | null;
   sort: SortKey;
+  /** Top of the price slider (rupees), from priceMaxOf(products). */
+  priceMax: number;
 };
 
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -80,20 +59,21 @@ const MAX_QUERY_LENGTH = 100;
 /** Read the filters from a page's searchParams (bad values fall back to defaults). */
 export function readFilters(
   params: SearchParams,
+  priceMax: number,
   category: string | null = null,
 ): ListingFilters {
   const q = first(params.q).trim().slice(0, MAX_QUERY_LENGTH);
 
   const rawMax = Number.parseInt(first(params.max), 10);
   const max =
-    Number.isFinite(rawMax) && rawMax < PRICE_MAX
+    Number.isFinite(rawMax) && rawMax < priceMax
       ? Math.max(PRICE_MIN, rawMax)
       : null;
 
   const rawSort = first(params.sort);
   const sort = isSortKey(rawSort) ? rawSort : DEFAULT_SORT;
 
-  return { category, q, max, sort };
+  return { category, q, max, sort, priceMax };
 }
 
 /** URL for a set of filters. Defaults are left out to keep links short. */
@@ -101,7 +81,7 @@ export function listingHref(filters: ListingFilters): string {
   const path = filters.category ? categoryHref(filters.category) : "/products";
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
-  if (filters.max !== null && filters.max < PRICE_MAX) {
+  if (filters.max !== null && filters.max < filters.priceMax) {
     params.set("max", String(filters.max));
   }
   if (filters.sort !== DEFAULT_SORT) params.set("sort", filters.sort);
@@ -113,36 +93,35 @@ export function listingHref(filters: ListingFilters): string {
 export const hasNarrowingFilters = (f: ListingFilters) =>
   f.q !== "" || f.max !== null;
 
-export const getCategory = (slug: string) =>
-  CATEGORIES.find((c) => c.slug === slug);
-
 /* Filtering and sorting --------------------------------------------- */
 
 const byName = new Intl.Collator("en-IN", { sensitivity: "base" });
 
-/** Search matches the product name or its category name, ignoring case. */
-const matchesSearch = (p: ListingProduct, q: string) =>
-  p.name.toLowerCase().includes(q) ||
-  (getCategory(p.category)?.name.toLowerCase().includes(q) ?? false);
-
-/** Filter (category, search, max price) then sort. Recommended = data order. */
+/** Filter (category, search, max price) then sort. Recommended = repository order. */
 export function applyFilters(
   products: ListingProduct[],
   filters: ListingFilters,
+  categories: Pick<CatalogCategory, "slug" | "name">[],
 ): ListingProduct[] {
   const q = filters.q.toLowerCase();
+  const categoryName = new Map(categories.map((c) => [c.slug, c.name.toLowerCase()]));
+  // Search matches the product name or its category name, ignoring case.
+  const matchesSearch = (p: ListingProduct) =>
+    p.name.toLowerCase().includes(q) || (categoryName.get(p.category)?.includes(q) ?? false);
+  const maxPaise = filters.max === null ? null : filters.max * 100;
+
   const result = products.filter(
     (p) =>
       (!filters.category || p.category === filters.category) &&
-      (!q || matchesSearch(p, q)) &&
-      (filters.max === null || p.price <= filters.max),
+      (!q || matchesSearch(p)) &&
+      (maxPaise === null || p.pricePaise <= maxPaise),
   );
 
   switch (filters.sort) {
     case "price-asc":
-      return result.sort((a, b) => a.price - b.price);
+      return result.sort((a, b) => a.pricePaise - b.pricePaise);
     case "price-desc":
-      return result.sort((a, b) => b.price - a.price);
+      return result.sort((a, b) => b.pricePaise - a.pricePaise);
     case "name-asc":
       return result.sort((a, b) => byName.compare(a.name, b.name));
     default:
@@ -153,8 +132,8 @@ export function applyFilters(
 /* Text -------------------------------------------------------------- */
 
 /** "1 Day Delivery" / "3 Day Delivery"; null when the time isn't known. */
-export function deliveryText(days?: number): string | null {
-  if (days === undefined || !Number.isFinite(days) || days < 1) return null;
+export function deliveryText(days?: number | null): string | null {
+  if (days === undefined || days === null || !Number.isFinite(days) || days < 1) return null;
   return `${days} Day Delivery`;
 }
 

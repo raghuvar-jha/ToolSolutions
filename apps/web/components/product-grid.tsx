@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CATEGORIES } from "../lib/categories";
-import type { BestSellerProduct } from "../lib/Products";
+import type { ProductSummary } from "../lib/catalog/types";
 import CategoryChips, { type Chip } from "./category-chips";
 import ProductCard from "./product-card";
 
@@ -17,7 +17,7 @@ const CHIPS: Chip[] = [
 
 type ProductGridProps = {
   title: string;
-  products: BestSellerProduct[];
+  products: ProductSummary[];
 };
 
 export default function ProductGrid({ title, products }: ProductGridProps) {

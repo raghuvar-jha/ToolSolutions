@@ -7,23 +7,22 @@ import ProductInfo from "../../../components/product-info";
 import DeliveryBox from "../../../components/delivery-box";
 import ProductReviews from "../../../components/product-reviews";
 import SimilarProducts from "../../../components/similar-products";
-import { PRODUCT_DETAILS, getProductById } from "../../../lib/Products";
+import {
+  getProductById,
+  getProductReviews,
+  getSimilarProducts,
+} from "../../../lib/catalog/product-repository";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
 
 type PageProps = { params: Promise<{ id: string }> };
 
-/** Pre-render the known products; unknown IDs still render (not-found state). */
-export function generateStaticParams() {
-  return PRODUCT_DETAILS.map((p) => ({ id: p.id }));
-}
-
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = await getProductById(id);
   return { title: product ? product.name : "Product not found" };
 }
 
@@ -34,7 +33,10 @@ export async function generateMetadata({
  */
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = await getProductById(id);
+  const [reviews, similar] = product
+    ? await Promise.all([getProductReviews(product.id), getSimilarProducts(product, 4)])
+    : [null, []];
 
   return (
     <>
@@ -46,17 +48,20 @@ export default async function ProductPage({ params }: PageProps) {
               <ProductGallery images={product.images} name={product.name} />
               <div className="space-y-6">
                 <ProductInfo product={product} />
-                <DeliveryBox
-                  deliveryDays={product.deliveryDays}
-                  returnPolicy={product.returnPolicy}
-                  warrantyText={product.warrantyText}
-                />
+                {/* Only products with delivery data (pd-005 to pd-007 have none yet). */}
+                {product.deliveryDays !== null && product.returnPolicy && product.warrantyText && (
+                  <DeliveryBox
+                    deliveryDays={product.deliveryDays}
+                    returnPolicy={product.returnPolicy}
+                    warrantyText={product.warrantyText}
+                  />
+                )}
               </div>
             </div>
 
             <div className="mt-12 space-y-12 lg:mt-20 lg:space-y-20">
-              <ProductReviews reviews={product.reviews} />
-              <SimilarProducts product={product} />
+              <ProductReviews reviews={reviews?.reviews ?? []} />
+              <SimilarProducts similar={similar} />
             </div>
           </>
         ) : (

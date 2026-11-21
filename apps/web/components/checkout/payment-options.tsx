@@ -1,7 +1,7 @@
 "use client";
 
 import { Banknote, Info, ShieldCheck } from "lucide-react";
-import { formatInr } from "../../lib/Products";
+import { formatInr } from "../../lib/catalog/format";
 
 export type PaymentChoice = "razorpay" | "cod";
 

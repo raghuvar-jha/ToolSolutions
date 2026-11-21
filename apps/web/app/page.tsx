@@ -4,15 +4,16 @@ import ProductSections from "../components/Products";
 import Footer from "../components/footer";
 import ProductGrid from "../components/product-grid";
 import CertificatesSection from "../components/certificates-section";
-import { BEST_SELLERS } from "../lib/Products";
+import { getBestSellers } from "../lib/catalog/product-repository";
 
-export default function Home() {
+export default async function Home() {
+  const bestSellers = await getBestSellers();
   return (
     <>
       <main>
         <SiteHeader/>
         <HeroCarousel />
-        <ProductGrid title="BEST SELLER" products={BEST_SELLERS} />
+        <ProductGrid title="BEST SELLER" products={bestSellers} />
         
         <CertificatesSection />
       </main>

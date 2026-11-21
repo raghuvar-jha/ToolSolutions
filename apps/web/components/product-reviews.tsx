@@ -2,11 +2,8 @@
 
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useRef, useState } from "react";
-import {
-  averageRating,
-  ratingCounts,
-  type ProductReview,
-} from "../lib/Products";
+import { averageRating, ratingCounts } from "../lib/catalog/reviews";
+import type { ProductReview } from "../lib/catalog/types";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";

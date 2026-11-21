@@ -1,0 +1,103 @@
+// Catalog schema (spec 012). Accounts and orders are added in the account data spec.
+//
+// Money is integer paise (₹1 = 100). GST is basis points (18% = 1800).
+// Neon PostgreSQL. Connection URLs come from prisma.config.ts (DIRECT_URL) and lib/prisma-client.ts (DATABASE_URL).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  sortOrder Int       @default(0)
+  products  Product[]
+}
+
+model Product {
+  /// Existing ids are kept, e.g. "pd-006".
+  id                 String           @id
+  slug               String           @unique
+  name               String
+  brand              String
+  categoryId         String
+  category           Category         @relation(fields: [categoryId], references: [id])
+  shortDescription   String
+  description        String?
+  pricePaise         Int
+  originalPricePaise Int?
+  onSale             Boolean          @default(false)
+  /// null = GST is included in the price (current behaviour for all products).
+  gstRateBps         Int?
+  /// Stock for products without variants. Products with variants use ProductVariant.stock.
+  stock              Int              @default(0)
+  deliveryDays       Int?
+  returnDays         Int?
+  warrantyText       String?
+  returnPolicy       String?
+  inBox              String[]
+  /// [{ "label": string, "value": string }]
+  specs              Json             @default("[]")
+  /// Paths under public/images, e.g. "/images/products/Drill.png". The first is the main image.
+  images             String[]
+  /// Homepage sections the product appears in: "popular", "featured".
+  collections        String[]
+  /// Position in the homepage Best Seller grid; null = not a best seller.
+  bestSellerRank     Int?
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  variants           ProductVariant[]
+  reviews            Review[]
+
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  /// "{productId}:{value}", so stored carts that use the value keep working.
+  id         String  @id
+  productId  String
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// Option group, e.g. "Size".
+  name       String
+  /// Chip text, e.g. "125 mm".
+  value      String
+  /// null = falls back to the product price.
+  pricePaise Int?
+  stock      Int     @default(0)
+  sortOrder  Int     @default(0)
+
+  @@unique([productId, value])
+}
+
+enum ReviewStatus {
+  published
+  hidden
+}
+
+model Review {
+  id               String       @id @default(cuid())
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// Becomes a relation to User when the account data spec adds that model.
+  userId           String?
+  authorName       String
+  /// 1 to 5 (checked in the migration).
+  rating           Int
+  title            String?
+  body             String
+  verifiedPurchase Boolean      @default(false)
+  /// true for reviews that came from the seed data.
+  isSample         Boolean      @default(false)
+  status           ReviewStatus @default(published)
+  createdAt        DateTime     @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId, status])
+}

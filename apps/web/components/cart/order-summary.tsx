@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ChevronDown, Tag } from "lucide-react";
-import { formatInr } from "../../lib/Products";
-import { shippingQuote } from "../../lib/shipping";
+import { formatPaise } from "../../lib/catalog/format";
+import { shippingQuotePaise } from "../../lib/shipping";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
@@ -28,7 +28,7 @@ type OrderSummaryProps = {
  * The promo field is display-only in v1: no discount is calculated.
  */
 export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, total }: OrderSummaryProps) {
-  const shipping = shippingQuote(subtotal);
+  const shipping = shippingQuotePaise(subtotal);
 
   return (
     <>
@@ -69,7 +69,7 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
               <dt className="text-muted">
                 Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
               </dt>
-              <dd className="font-semibold text-text">{formatInr(subtotal)}</dd>
+              <dd className="font-semibold text-text">{formatPaise(subtotal)}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted">Shipping</dt>
@@ -79,14 +79,14 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted">GST</dt>
-              <dd className="text-text">{gstIncluded ? "Included in price" : formatInr(gst)}</dd>
+              <dd className="text-text">{gstIncluded ? "Included in price" : formatPaise(gst)}</dd>
             </div>
           </dl>
         </div>
 
         <div className="flex items-baseline justify-between gap-4 border-t border-line px-4 py-4 lg:px-6 lg:py-5">
           <span className="text-lg font-semibold text-text">Total</span>
-          <span className="text-2xl font-semibold text-brand-950">{formatInr(total)}</span>
+          <span className="text-2xl font-semibold text-brand-950">{formatPaise(total)}</span>
         </div>
 
         <div className="space-y-3 border-t border-line p-4 lg:p-6">
@@ -105,7 +105,7 @@ export default function OrderSummary({ itemCount, subtotal, gst, gstIncluded, to
         <div className="mx-auto flex w-full max-w-site items-center gap-4 px-4 py-3">
           <p className="shrink-0 leading-tight">
             <span className="block text-xs text-muted">Total</span>
-            <span className="block text-lg font-semibold text-brand-950">{formatInr(total)}</span>
+            <span className="block text-lg font-semibold text-brand-950">{formatPaise(total)}</span>
           </p>
           <Link href={CHECKOUT_HREF} className={PRIMARY_BUTTON}>
             Continue to checkout

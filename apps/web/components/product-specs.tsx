@@ -1,4 +1,4 @@
-import type { ProductSpec } from "../lib/Products";
+import type { ProductSpec } from "../lib/catalog/types";
 
 type ProductSpecsProps = {
   specs: ProductSpec[];
