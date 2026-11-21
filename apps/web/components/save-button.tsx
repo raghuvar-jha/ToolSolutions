@@ -19,11 +19,19 @@ type SaveButtonProps = {
   productId: string;
   productName: string;
   variant: keyof typeof VARIANTS;
+  /**
+   * Cart line (spec 014): pressing saves the product (never un-saves) and then
+   * calls this, which removes the line from the cart.
+   */
+  onSaved?: () => void;
 };
 
-/** Heart toggle that adds a product to, or removes it from, the saved list. */
-export default function SaveButton({ productId, productName, variant }: SaveButtonProps) {
-  const { isSaved, toggle } = useSaved();
+/**
+ * Heart toggle that adds a product to, or removes it from, the user's saved list
+ * (database). Logged out: goes to /login?next=<product page>.
+ */
+export default function SaveButton({ productId, productName, variant, onSaved }: SaveButtonProps) {
+  const { isSaved, toggle, save } = useSaved();
   const saved = isSaved(productId);
   const iconSize = variant === "text" ? "size-4" : "size-5";
 
@@ -38,7 +46,11 @@ export default function SaveButton({ productId, productName, variant }: SaveButt
         // Inside a card, never follow the card's link.
         e.preventDefault();
         e.stopPropagation();
-        toggle(productId);
+        if (onSaved) {
+          void save(productId).then((ok) => ok && onSaved());
+        } else {
+          toggle(productId);
+        }
       }}
       className={`${VARIANTS[variant]} transition-colors ${FOCUS}`}
     >

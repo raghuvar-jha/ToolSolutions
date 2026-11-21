@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CircleAlert, Plus } from "lucide-react";
 import { INDIAN_STATES, type AddressField } from "@repo/shared/checkout";
 
@@ -64,7 +65,16 @@ type AddressFormProps = {
   onChange: (name: AddressField, value: string) => void;
   /** Registers each control so the checkout can focus the first error. */
   fieldRef: (name: AddressField) => (el: HTMLElement | null) => void;
+  /** "account": fields only, without email (/account/addresses). Default: "checkout". */
+  variant?: "checkout" | "account";
+  /** Checkout: the user's saved addresses (default first). Choosing one fills the fields. */
+  savedAddresses?: SavedAddressOption[];
+  /** The chosen saved address id, or null for "Use a new address". */
+  selectedId?: string | null;
+  onSelectSaved?: (id: string | null) => void;
 };
+
+export type SavedAddressOption = { id: string; fullName: string; preview: string; isDefault: boolean };
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
@@ -94,10 +104,19 @@ function Label({ htmlFor, label, optional }: { htmlFor: string; label: string; o
  * with a radio. Errors show under each field. Nothing is sent to the server
  * until the order is placed.
  */
-export default function AddressForm({ values, errors, onChange, fieldRef }: AddressFormProps) {
-  const border = (name: AddressField) =>
-    errors[name] ? "border-brand-950 ring-1 ring-brand-950" : "border-faint/50";
-  const described = (name: AddressField) => (errors[name] ? `${name}-error` : undefined);
+export default function AddressForm({
+  values,
+  errors,
+  onChange,
+  fieldRef,
+  variant = "checkout",
+  savedAddresses = [],
+  selectedId = null,
+  onSelectSaved,
+}: AddressFormProps) {
+  if (variant === "account") {
+    return <AddressFields values={values} errors={errors} onChange={onChange} fieldRef={fieldRef} hideEmail />;
+  }
 
   const filled = values.fullName.trim() && values.line1.trim();
   const preview = [values.line1, values.city, values.state, values.pincode].filter((s) => s.trim()).join(", ");
@@ -109,125 +128,168 @@ export default function AddressForm({ values, errors, onChange, fieldRef }: Addr
       </h2>
 
       <div className="mt-4 rounded-card border border-line bg-surface p-4 shadow-sm lg:p-5">
+        {savedAddresses.length > 0 && (
+          <fieldset className="mb-4 space-y-3 border-b border-line pb-4">
+            <legend className="sr-only">Saved addresses</legend>
+            {savedAddresses.map((a) => (
+              <label key={a.id} className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="radio"
+                  name="address-choice"
+                  checked={selectedId === a.id}
+                  onChange={() => onSelectSaved?.(a.id)}
+                  className="mt-1 size-4 shrink-0 accent-brand-950"
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-text">
+                    {a.fullName}
+                    {a.isDefault && <span className="ml-2 text-xs font-normal text-muted">Default</span>}
+                  </span>
+                  <span className="block truncate text-sm text-muted">{a.preview}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        )}
         <label className="flex cursor-pointer items-start gap-3">
           <input
             type="radio"
             name="address-choice"
-            defaultChecked
+            checked={savedAddresses.length === 0 || selectedId === null}
+            onChange={() => onSelectSaved?.(null)}
             className="mt-1 size-4 shrink-0 accent-brand-950"
           />
           <span className="min-w-0">
             <span className="block font-semibold text-text">
-              {filled ? values.fullName : "Deliver to this address"}
+              {savedAddresses.length > 0 ? "Use a new address" : filled ? values.fullName : "Deliver to this address"}
             </span>
             <span className="block truncate text-sm text-muted">
-              {filled ? preview : "Enter your delivery details below."}
+              {savedAddresses.length > 0
+                ? "Or edit the details below."
+                : filled
+                  ? preview
+                  : "Enter your delivery details below."}
             </span>
           </span>
         </label>
 
-        <div className="mt-4 grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
-          {FIELDS.map((f) => (
-            <div key={f.name} className={f.wide ? "sm:col-span-2" : undefined}>
-              <Label htmlFor={f.name} label={f.label} optional={f.optional} />
-              <input
-                ref={fieldRef(f.name)}
-                id={f.name}
-                name={f.name}
-                type={f.type ?? "text"}
-                inputMode={f.inputMode}
-                autoComplete={f.autoComplete}
-                maxLength={f.maxLength}
-                value={values[f.name]}
-                onChange={(e) =>
-                  onChange(
-                    f.name,
-                    f.inputMode === "numeric" ? e.target.value.replace(/\D/g, "") : e.target.value,
-                  )
-                }
-                aria-required={!f.optional}
-                aria-invalid={errors[f.name] ? true : undefined}
-                aria-describedby={described(f.name)}
-                className={`h-11 ${INPUT} ${border(f.name)}`}
-              />
-              <FieldError id={`${f.name}-error`} message={errors[f.name]} />
-            </div>
-          ))}
-
-          <div>
-            <Label htmlFor="state" label="State" />
-            <select
-              ref={fieldRef("state")}
-              id="state"
-              name="state"
-              autoComplete="address-level1"
-              value={values.state}
-              onChange={(e) => onChange("state", e.target.value)}
-              aria-required
-              aria-invalid={errors.state ? true : undefined}
-              aria-describedby={described("state")}
-              className={`h-11 ${INPUT} ${border("state")} ${values.state ? "" : "text-faint"}`}
-            >
-              <option value="">Select state</option>
-              {INDIAN_STATES.map((s) => (
-                <option key={s} value={s} className="text-text">
-                  {s}
-                </option>
-              ))}
-            </select>
-            <FieldError id="state-error" message={errors.state} />
-          </div>
-
-          <div>
-            <Label htmlFor="pincode" label="Pincode" />
-            <input
-              ref={fieldRef("pincode")}
-              id="pincode"
-              name="pincode"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              maxLength={6}
-              value={values.pincode}
-              onChange={(e) => onChange("pincode", e.target.value.replace(/\D/g, ""))}
-              aria-required
-              aria-invalid={errors.pincode ? true : undefined}
-              aria-describedby={described("pincode")}
-              className={`h-11 ${INPUT} ${border("pincode")}`}
-            />
-            <FieldError id="pincode-error" message={errors.pincode} />
-          </div>
-
-          <div className="sm:col-span-2">
-            <Label htmlFor="instructions" label="Delivery instructions" optional />
-            <textarea
-              ref={fieldRef("instructions")}
-              id="instructions"
-              name="instructions"
-              rows={2}
-              maxLength={200}
-              value={values.instructions}
-              onChange={(e) => onChange("instructions", e.target.value)}
-              aria-invalid={errors.instructions ? true : undefined}
-              aria-describedby={described("instructions")}
-              placeholder="e.g. Call before delivery"
-              className={`py-2 ${INPUT} ${border("instructions")}`}
-            />
-            <FieldError id="instructions-error" message={errors.instructions} />
-          </div>
-        </div>
+        <AddressFields values={values} errors={errors} onChange={onChange} fieldRef={fieldRef} divided />
       </div>
 
-      {/* v1 supports one address; more addresses need accounts (later). */}
-      <button
-        type="button"
-        aria-disabled="true"
-        title="Saving more addresses is coming soon"
-        className={`mt-3 inline-flex cursor-not-allowed items-center gap-1.5 rounded-md px-1 py-1 text-sm text-muted ${FOCUS}`}
+      {/* Saved addresses are managed on the account page (spec 014). */}
+      <Link
+        href="/account/addresses"
+        className={`mt-3 inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm text-brand-700 hover:underline ${FOCUS}`}
       >
         <Plus aria-hidden className="size-4" />
         Add new address
-        <span className="sr-only"> (coming soon)</span>
-      </button>
+      </Link>
     </section>
+  );
+}
+
+/** The address inputs (shared by checkout and /account/addresses). */
+export function AddressFields({
+  values,
+  errors,
+  onChange,
+  fieldRef,
+  hideEmail = false,
+  divided = false,
+}: Pick<AddressFormProps, "values" | "errors" | "onChange" | "fieldRef"> & { hideEmail?: boolean; divided?: boolean }) {
+  const border = (name: AddressField) =>
+    errors[name] ? "border-brand-950 ring-1 ring-brand-950" : "border-faint/50";
+  const described = (name: AddressField) => (errors[name] ? `${name}-error` : undefined);
+
+  return (
+    <div className={`grid gap-4 sm:grid-cols-2 ${divided ? "mt-4 border-t border-line pt-4" : ""}`}>
+      {FIELDS.filter((f) => !(hideEmail && f.name === "email")).map((f) => (
+        <div key={f.name} className={f.wide ? "sm:col-span-2" : undefined}>
+          <Label htmlFor={f.name} label={f.label} optional={f.optional} />
+          <input
+            ref={fieldRef(f.name)}
+            id={f.name}
+            name={f.name}
+            type={f.type ?? "text"}
+            inputMode={f.inputMode}
+            autoComplete={f.autoComplete}
+            maxLength={f.maxLength}
+            value={values[f.name]}
+            onChange={(e) =>
+              onChange(
+                f.name,
+                f.inputMode === "numeric" ? e.target.value.replace(/\D/g, "") : e.target.value,
+              )
+            }
+            aria-required={!f.optional}
+            aria-invalid={errors[f.name] ? true : undefined}
+            aria-describedby={described(f.name)}
+            className={`h-11 ${INPUT} ${border(f.name)}`}
+          />
+          <FieldError id={`${f.name}-error`} message={errors[f.name]} />
+        </div>
+      ))}
+
+      <div>
+        <Label htmlFor="state" label="State" />
+        <select
+          ref={fieldRef("state")}
+          id="state"
+          name="state"
+          autoComplete="address-level1"
+          value={values.state}
+          onChange={(e) => onChange("state", e.target.value)}
+          aria-required
+          aria-invalid={errors.state ? true : undefined}
+          aria-describedby={described("state")}
+          className={`h-11 ${INPUT} ${border("state")} ${values.state ? "" : "text-faint"}`}
+        >
+          <option value="">Select state</option>
+          {INDIAN_STATES.map((s) => (
+            <option key={s} value={s} className="text-text">
+              {s}
+            </option>
+          ))}
+        </select>
+        <FieldError id="state-error" message={errors.state} />
+      </div>
+
+      <div>
+        <Label htmlFor="pincode" label="Pincode" />
+        <input
+          ref={fieldRef("pincode")}
+          id="pincode"
+          name="pincode"
+          inputMode="numeric"
+          autoComplete="postal-code"
+          maxLength={6}
+          value={values.pincode}
+          onChange={(e) => onChange("pincode", e.target.value.replace(/\D/g, ""))}
+          aria-required
+          aria-invalid={errors.pincode ? true : undefined}
+          aria-describedby={described("pincode")}
+          className={`h-11 ${INPUT} ${border("pincode")}`}
+        />
+        <FieldError id="pincode-error" message={errors.pincode} />
+      </div>
+
+      <div className="sm:col-span-2">
+        <Label htmlFor="instructions" label="Delivery instructions" optional />
+        <textarea
+          ref={fieldRef("instructions")}
+          id="instructions"
+          name="instructions"
+          rows={2}
+          maxLength={200}
+          value={values.instructions}
+          onChange={(e) => onChange("instructions", e.target.value)}
+          aria-invalid={errors.instructions ? true : undefined}
+          aria-describedby={described("instructions")}
+          placeholder="e.g. Call before delivery"
+          className={`py-2 ${INPUT} ${border("instructions")}`}
+        />
+        <FieldError id="instructions-error" message={errors.instructions} />
+      </div>
+    </div>
   );
 }

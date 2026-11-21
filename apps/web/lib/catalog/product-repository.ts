@@ -11,15 +11,12 @@ import { connection } from "next/server";
 import { cache } from "react";
 import type { Prisma } from "../../generated/prisma/client";
 import { db } from "../db";
-import { averageRating } from "./reviews";
 import {
   toSummary,
   type CatalogCategory,
   type ProductDetail,
-  type ProductReview,
   type ProductSpec,
   type ProductSummary,
-  type ReviewSummary,
 } from "./types";
 
 const PRODUCT_INCLUDE = {
@@ -82,9 +79,6 @@ function toDetail(row: ProductRow): ProductDetail {
     bestSellerRank: row.bestSellerRank,
   };
 }
-
-const isRating = (n: number): n is ProductReview["rating"] =>
-  Number.isInteger(n) && n >= 1 && n <= 5;
 
 /* Reads -------------------------------------------------------------- */
 
@@ -151,29 +145,6 @@ export const getCategories = cache(async (): Promise<CatalogCategory[]> => {
 
 export async function getCategoryBySlug(slug: string): Promise<CatalogCategory | null> {
   return (await getCategories()).find((c) => c.slug === slug) ?? null;
-}
-
-/** Published reviews, oldest first, with the average rating and count. */
-export async function getProductReviews(productId: string): Promise<ReviewSummary> {
-  await connection();
-  const rows = await db().review.findMany({
-    where: { productId, status: "published", product: ACTIVE },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-  });
-  const reviews = rows.flatMap((r): ProductReview[] =>
-    isRating(r.rating)
-      ? [
-          {
-            id: r.id,
-            author: r.authorName,
-            rating: r.rating,
-            date: r.createdAt.toISOString().slice(0, 10),
-            text: r.body,
-          },
-        ]
-      : [],
-  );
-  return { reviews, average: averageRating(reviews), count: reviews.length };
 }
 
 /* Writes (admin, not used by any route yet) -------------------------- */

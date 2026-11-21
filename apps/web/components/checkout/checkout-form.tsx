@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { addressSchema, fieldErrors, type AddressField } from "@repo/shared/checkout";
 import { useCart } from "../../lib/cart/cart-context";
-import { BROWSER_ORDERS_KEY } from "../../lib/orders/order-repository";
 import { shippingQuotePaise } from "../../lib/shipping";
-import AddressForm, { ADDRESS_FIELDS, EMPTY_ADDRESS, type AddressValues } from "./address-form";
+import AddressForm, {
+  ADDRESS_FIELDS,
+  EMPTY_ADDRESS,
+  type AddressValues,
+  type SavedAddressOption,
+} from "./address-form";
 import CheckoutSummary from "./checkout-summary";
 import PaymentOptions, { type PaymentChoice } from "./payment-options";
 import StickyPayBar from "./sticky-pay-bar";
@@ -18,6 +22,9 @@ export type CheckoutConfig = {
   codMax: number;
   razorpayAvailable: boolean;
 };
+
+/** A saved address from the server (spec 014), without email. */
+export type CheckoutAddress = Omit<AddressValues, "email"> & { id: string; isDefault: boolean };
 
 type RazorpayHandoff = {
   keyId: string;
@@ -54,15 +61,10 @@ function newIdempotencyKey() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function rememberOrder(id: string) {
-  try {
-    const raw = window.localStorage.getItem(BROWSER_ORDERS_KEY);
-    const ids: unknown = raw ? JSON.parse(raw) : [];
-    const list = Array.isArray(ids) ? ids.filter((x): x is string => typeof x === "string") : [];
-    window.localStorage.setItem(BROWSER_ORDERS_KEY, JSON.stringify([id, ...list.filter((x) => x !== id)].slice(0, 50)));
-  } catch {
-    // Storage blocked: the order still exists; it just won't appear in this browser's list.
-  }
+/** Form values for a saved address, with the account email. */
+function fromSaved(a: CheckoutAddress, email: string): AddressValues {
+  const { id: _id, isDefault: _default, ...fields } = a;
+  return { ...fields, email };
 }
 
 /** Live mode only: Razorpay's own script (card and UPI details stay inside its window). */
@@ -82,10 +84,24 @@ function loadRazorpay(): Promise<boolean> {
  * pay bar. Validates with the shared Zod schema, then POSTs only IDs and
  * quantities; the server recalculates every price.
  */
-export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
+export default function CheckoutForm({
+  config,
+  addresses = [],
+  email = "",
+}: {
+  config: CheckoutConfig;
+  /** The user's saved addresses, default first. */
+  addresses?: CheckoutAddress[];
+  /** The account email, pre-filled for the order. */
+  email?: string;
+}) {
   const router = useRouter();
   const cart = useCart();
-  const [values, setValues] = useState<AddressValues>(EMPTY_ADDRESS);
+  const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
+  const [selectedId, setSelectedId] = useState<string | null>(defaultAddress?.id ?? null);
+  const [values, setValues] = useState<AddressValues>(
+    defaultAddress ? fromSaved(defaultAddress, email) : { ...EMPTY_ADDRESS, email },
+  );
   const [errors, setErrors] = useState<Partial<Record<AddressField, string>>>({});
   const [errorCount, setErrorCount] = useState(0);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -131,8 +147,21 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
     requestAnimationFrame(() => alertRef.current?.focus());
   };
 
+  const selectSaved = (id: string | null) => {
+    setSelectedId(id);
+    setErrors({});
+    const saved = addresses.find((a) => a.id === id);
+    setValues(saved ? fromSaved(saved, values.email || email) : { ...EMPTY_ADDRESS, email: values.email || email });
+  };
+
+  const savedOptions: SavedAddressOption[] = addresses.map((a) => ({
+    id: a.id,
+    fullName: a.fullName,
+    preview: [a.line1, a.city, a.state, a.pincode].filter(Boolean).join(", "),
+    isDefault: a.isDefault,
+  }));
+
   const finish = (orderId: string) => {
-    rememberOrder(orderId);
     setDone(true);
     cart.clearCart();
     router.push(`/orders/${orderId}`);
@@ -216,6 +245,11 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
         }),
       });
       const data = (await res.json().catch(() => ({}))) as PlaceResponse;
+      // Session ended while on this page: log in again and come back.
+      if (res.status === 401) {
+        router.push(`/login?next=${encodeURIComponent("/checkout")}`);
+        return;
+      }
 
       if (!res.ok || !data.orderId) {
         const serverFields: Partial<Record<AddressField, string>> = {};
@@ -272,7 +306,15 @@ export default function CheckoutForm({ config }: { config: CheckoutConfig }) {
 
       <div className="grid gap-8 lg:grid-cols-[56fr_37fr] lg:items-start lg:gap-16">
         <div className="space-y-8">
-          <AddressForm values={values} errors={errors} onChange={onChange} fieldRef={fieldRef} />
+          <AddressForm
+            values={values}
+            errors={errors}
+            onChange={onChange}
+            fieldRef={fieldRef}
+            savedAddresses={savedOptions}
+            selectedId={selectedId}
+            onSelectSaved={selectSaved}
+          />
           <PaymentOptions
             value={method}
             onChange={setChoice}

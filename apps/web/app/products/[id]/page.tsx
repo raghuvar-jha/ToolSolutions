@@ -7,11 +7,10 @@ import ProductInfo from "../../../components/product-info";
 import DeliveryBox from "../../../components/delivery-box";
 import ProductReviews from "../../../components/product-reviews";
 import SimilarProducts from "../../../components/similar-products";
-import {
-  getProductById,
-  getProductReviews,
-  getSimilarProducts,
-} from "../../../lib/catalog/product-repository";
+import ReviewComposer, { type ComposerState } from "../../../components/review-composer";
+import { getCurrentUser } from "../../../lib/auth/session";
+import { getProductById, getSimilarProducts } from "../../../lib/catalog/product-repository";
+import { getReviewStatus, getReviewsForProduct } from "../../../lib/reviews/review-service";
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
@@ -34,9 +33,17 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
   const product = await getProductById(id);
-  const [reviews, similar] = product
-    ? await Promise.all([getProductReviews(product.id), getSimilarProducts(product, 4)])
-    : [null, []];
+  const user = product ? await getCurrentUser() : null;
+  const [reviews, similar, reviewStatus] = product
+    ? await Promise.all([
+        getReviewsForProduct(product.id),
+        getSimilarProducts(product, 4),
+        user ? getReviewStatus(user.id, product.id) : null,
+      ])
+    : [null, [], null];
+  const composer: ComposerState = reviewStatus
+    ? { kind: "logged-in", canReview: reviewStatus.canReview, mine: reviewStatus.mine }
+    : { kind: "logged-out", loginHref: `/login?next=${encodeURIComponent(`/products/${id}`)}` };
 
   return (
     <>
@@ -60,7 +67,11 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
 
             <div className="mt-12 space-y-12 lg:mt-20 lg:space-y-20">
-              <ProductReviews reviews={reviews?.reviews ?? []} />
+              <ProductReviews
+                reviews={reviews?.reviews ?? []}
+                average={reviews?.average ?? null}
+                composer={<ReviewComposer productId={product.id} state={composer} />}
+              />
               <SimilarProducts similar={similar} />
             </div>
           </>

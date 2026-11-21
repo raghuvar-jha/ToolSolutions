@@ -4,10 +4,11 @@ import Link from "next/link";
 import { CalendarDays, CircleCheck, Clock, CreditCard, MapPin } from "lucide-react";
 import SiteHeader from "../../../components/Header";
 import Footer from "../../../components/footer";
-import { orderRepository } from "../../../lib/orders/json-order-repository";
-import type { Order } from "../../../lib/orders/order-repository";
-import { formatInr, productPageHref } from "../../../lib/Products";
 import { getCurrentUser, requireUser } from "../../../lib/auth/session";
+import { formatPaise, productPageHref } from "../../../lib/catalog/format";
+import { getOrderForUser, type OrderWithItems } from "../../../lib/orders/order-service";
+
+type Order = OrderWithItems;
 
 // Same classes as the planned components/Container.tsx (DESIGN.md §2).
 const CONTAINER = "mx-auto w-full max-w-site px-4 lg:px-6";
@@ -27,25 +28,39 @@ const longDate = new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata",
 });
 
-const PAYMENT_TEXT: Record<Order["payment"]["status"], string> = {
-  pending: "Cash on Delivery · pay when your order arrives",
-  demo: "Paid online (demo, no real payment)",
-  created: "Online payment · awaiting payment",
-  paid: "Paid online",
-};
+function paymentText(order: Order): string {
+  switch (order.paymentStatus) {
+    case "pending":
+      return order.paymentMethod === "cod"
+        ? "Cash on Delivery · pay when your order arrives"
+        : "Online payment · awaiting payment";
+    case "demo":
+      return "Paid online (demo, no real payment)";
+    case "paid":
+      return "Paid online";
+    case "failed":
+      return "Payment failed";
+    case "refunded":
+      return "Refunded";
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  if (!(await getCurrentUser())) return { title: "Order" };
-  const order = await orderRepository.findById(id);
-  return { title: order ? `Order ${order.number}` : "Order not found" };
+  const user = await getCurrentUser();
+  if (!user) return { title: "Order" };
+  const order = await getOrderForUser(user.id, id);
+  return { title: order ? `Order ${order.orderNumber}` : "Order not found" };
 }
 
-/** Order confirmation and detail (spec 009). Login required (spec 013); orders aren't linked to accounts yet. */
+/**
+ * Order confirmation and detail (specs 009 and 014). Shown only to the order's owner;
+ * anyone else sees "Order not found", so other users' orders are never revealed.
+ */
 export default async function OrderPage({ params }: PageProps) {
   const { id } = await params;
-  await requireUser(`/orders/${encodeURIComponent(id)}`);
-  const order = await orderRepository.findById(id);
+  const user = await requireUser(`/orders/${encodeURIComponent(id)}`);
+  const order = await getOrderForUser(user.id, id);
 
   return (
     <>
@@ -59,9 +74,10 @@ export default async function OrderPage({ params }: PageProps) {
 }
 
 function OrderDetail({ order }: { order: Order }) {
-  const placed = order.status === "placed";
-  const a = order.address;
-  const count = order.lines.reduce((n, l) => n + l.quantity, 0);
+  // Live online orders stay "awaiting payment" until the server verifies Razorpay's signature.
+  const placed = !(order.paymentMethod === "razorpay" && order.paymentStatus === "pending");
+  const a = order;
+  const count = order.items.reduce((n, l) => n + l.quantity, 0);
 
   return (
     <>
@@ -73,9 +89,9 @@ function OrderDetail({ order }: { order: Order }) {
           {placed ? "Order placed" : "Payment pending"}
         </h1>
         <p className="mt-2 text-body">
-          Order number <span className="font-semibold text-text">{order.number}</span>
+          Order number <span className="font-semibold text-text">{order.orderNumber}</span>
         </p>
-        <p className="mt-1 text-sm text-muted">Placed on {longDate.format(new Date(order.createdAt))}</p>
+        <p className="mt-1 text-sm text-muted">Placed on {longDate.format(order.createdAt)}</p>
       </header>
 
       <div className="mt-8 grid gap-6 lg:mt-10 lg:grid-cols-[56fr_37fr] lg:items-start lg:gap-16">
@@ -85,21 +101,23 @@ function OrderDetail({ order }: { order: Order }) {
               Items ({count})
             </h2>
             <ul className="mt-2 divide-y divide-line">
-              {order.lines.map((l) => (
-                <li key={`${l.productId}:${l.variantId ?? ""}`} className="flex gap-4 py-4">
+              {order.items.map((l) => (
+                <li key={l.id} className="flex gap-4 py-4">
                   <div className="relative size-16 shrink-0 overflow-hidden rounded-card bg-well lg:size-20">
-                    <Image src={l.image} alt={l.name} fill sizes="80px" className="object-contain p-2" />
+                    {l.imageSnapshot && (
+                      <Image src={l.imageSnapshot} alt={l.productNameSnapshot} fill sizes="80px" className="object-contain p-2" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link href={productPageHref(l.productId)} className={`rounded-sm font-semibold text-text hover:text-brand-700 ${FOCUS}`}>
-                      {l.name}
+                      {l.productNameSnapshot}
                     </Link>
-                    {l.variantLabel && <p className="text-sm text-muted">{l.variantLabel}</p>}
+                    {l.variantNameSnapshot && <p className="text-sm text-muted">{l.variantNameSnapshot}</p>}
                     <p className="mt-1 text-sm text-muted">
-                      Qty {l.quantity} × {formatInr(l.unitPrice)}
+                      Qty {l.quantity} × {formatPaise(l.unitPricePaise)}
                     </p>
                   </div>
-                  <p className="shrink-0 font-semibold text-brand-950">{formatInr(l.lineTotal)}</p>
+                  <p className="shrink-0 font-semibold text-brand-950">{formatPaise(l.lineTotalPaise)}</p>
                 </li>
               ))}
             </ul>
@@ -124,7 +142,7 @@ function OrderDetail({ order }: { order: Order }) {
                 <br />
                 {a.city}, {a.state} {a.pincode}
                 <br />
-                {a.mobile} · {a.email}
+                {a.phone} · {a.email}
               </address>
               {a.instructions && <p className="mt-2 text-sm text-muted">Note: {a.instructions}</p>}
             </section>
@@ -135,13 +153,13 @@ function OrderDetail({ order }: { order: Order }) {
                 Estimated delivery
               </h2>
               <p className="mt-3 text-[15px] font-semibold text-success">
-                By {longDate.format(new Date(`${order.estimatedDelivery}T12:00:00+05:30`))}
+                By {longDate.format(order.estimatedDelivery)}
               </p>
               <h2 className="mt-5 flex items-center gap-2 text-lg font-semibold text-text">
                 <CreditCard aria-hidden className="size-5 text-brand-700" />
                 Payment
               </h2>
-              <p className="mt-3 text-[15px] text-body">{PAYMENT_TEXT[order.payment.status]}</p>
+              <p className="mt-3 text-[15px] text-body">{paymentText(order)}</p>
             </section>
           </div>
         </div>
@@ -151,33 +169,30 @@ function OrderDetail({ order }: { order: Order }) {
             Price Details ({count} {count === 1 ? "item" : "items"})
           </h2>
           <dl className="mt-3 space-y-2.5 text-[15px]">
-            {order.lines.map((l) => (
-              <div key={`${l.productId}:${l.variantId ?? ""}`} className="flex justify-between gap-4">
+            {order.items.map((l) => (
+              <div key={l.id} className="flex justify-between gap-4">
                 <dt className="text-body">
-                  {l.quantity} × {l.name}
-                  {l.variantId ? ` (${l.variantId})` : ""}
+                  {l.quantity} × {l.productNameSnapshot}
+                  {l.variantNameSnapshot ? ` (${l.variantNameSnapshot})` : ""}
                 </dt>
-                <dd className="shrink-0 text-text">{formatInr(l.lineTotal)}</dd>
+                <dd className="shrink-0 text-text">{formatPaise(l.lineTotalPaise)}</dd>
               </div>
             ))}
             <div className="flex justify-between gap-4">
               <dt className="text-body">Delivery Charges</dt>
-              <dd className={order.deliveryLabel === "free" ? "font-semibold text-success" : "text-muted"}>
-                {order.deliveryLabel === "free"
-                  ? "Free Delivery"
-                  : order.deliveryLabel === "charged"
-                    ? formatInr(order.delivery)
-                    : "To be confirmed"}
+              {/* Delivery fees aren't set yet (lib/shipping.ts), so ₹0 means "to be confirmed". */}
+              <dd className={order.deliveryPaise > 0 ? "text-text" : "text-muted"}>
+                {order.deliveryPaise > 0 ? formatPaise(order.deliveryPaise) : "To be confirmed"}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-body">GST</dt>
-              <dd className="text-text">{order.gstIncluded ? "Included in price" : formatInr(order.gst)}</dd>
+              <dd className="text-text">{order.gstPaise === 0 ? "Included in price" : formatPaise(order.gstPaise)}</dd>
             </div>
           </dl>
           <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-line pt-4">
             <span className="text-lg font-semibold text-text">Total Amount</span>
-            <span className="text-lg font-semibold text-brand-950">{formatInr(order.total)}</span>
+            <span className="text-lg font-semibold text-brand-950">{formatPaise(order.totalPaise)}</span>
           </div>
           <div className="mt-6 flex flex-col gap-3">
             <Link

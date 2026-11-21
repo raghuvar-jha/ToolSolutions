@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { useRef, useState } from "react";
-import { averageRating, ratingCounts } from "../lib/catalog/reviews";
-import type { ProductReview } from "../lib/catalog/types";
+import { useRef, useState, type ReactNode } from "react";
+import { ratingCounts } from "../lib/catalog/reviews";
+import type { ShownReview } from "../lib/reviews/review-service";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
@@ -37,14 +37,22 @@ function Stars({ rating }: { rating: number }) {
  * a time on the right (arrows or swipe). Everything is computed from the real
  * review list; with no reviews only "No reviews yet" is shown.
  */
-export default function ProductReviews({ reviews }: { reviews: ProductReview[] }) {
+type ProductReviewsProps = {
+  reviews: ShownReview[];
+  /** From the review service: calculated from exactly these reviews. */
+  average: number | null;
+  /** The write / edit form or the "Login to write a review" link (spec 014). */
+  composer?: ReactNode;
+};
+
+export default function ProductReviews({ reviews, average, composer }: ProductReviewsProps) {
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
 
-  const average = averageRating(reviews);
   const counts = ratingCounts(reviews);
   const total = reviews.length;
-  const review = reviews[index];
+  // The list can shrink after a delete: never point past the end.
+  const review = reviews[index] ?? reviews[0];
 
   const go = (next: number) => setIndex((next + total) % total);
 
@@ -116,14 +124,20 @@ export default function ProductReviews({ reviews }: { reviews: ProductReview[] }
             }}
           >
             <article aria-live="polite" className="flex-1">
-              <h3 className="text-base font-semibold text-text">{review.author}</h3>
+              <h3 className="text-base font-semibold text-text">
+                {review.author}
+                {review.verifiedPurchase && (
+                  <span className="ml-2 align-middle text-xs font-normal text-success">Verified purchase</span>
+                )}
+              </h3>
               <div className="mt-2 flex items-center justify-between gap-3">
                 <Stars rating={review.rating} />
                 <time dateTime={review.date} className="text-sm text-muted">
                   {dateFormat.format(new Date(review.date))}
                 </time>
               </div>
-              <p className="mt-4 text-[15px] leading-relaxed text-body">
+              {review.title && <p className="mt-4 font-semibold text-text">{review.title}</p>}
+              <p className={`${review.title ? "mt-1" : "mt-4"} text-[15px] leading-relaxed text-body`}>
                 &ldquo;{review.text}&rdquo;
               </p>
             </article>
@@ -163,6 +177,7 @@ export default function ProductReviews({ reviews }: { reviews: ProductReview[] }
           </div>
         </div>
       )}
+      {composer}
     </section>
   );
 }

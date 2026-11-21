@@ -17,8 +17,8 @@ const FOCUS =
 
 /**
  * Saved items: the products the shopper hearted, newest first, in the
- * listing grid. The list lives in localStorage, so the page shows a
- * placeholder until it has loaded. Tapping a card's heart removes it.
+ * listing grid. The list comes from the database with the page (spec 014),
+ * filtered to the logged-in user. Tapping a card's heart removes it.
  */
 export default function SavedPage() {
   const { ids, loaded } = useSaved();
