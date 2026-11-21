@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CircleAlert } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import { loginSchema, type LoginField, type LoginInput } from "@repo/shared/auth";
 import { fieldErrors } from "@repo/shared/checkout";
-import { findUserByEmail } from "../../lib/auth/users-storage";
+import { login } from "../../lib/auth/actions";
 import GoogleButton from "./google-button";
 import PasswordField from "./password-field";
 import TextField from "./text-field";
@@ -18,33 +17,21 @@ const FIELD_ORDER: LoginField[] = ["email", "password"];
 
 const EMPTY: LoginInput = { email: "", password: "" };
 
-/** Wait before leaving the page after a successful login. */
-const REDIRECT_MS = 1000;
-
 type Errors = Partial<Record<LoginField, string>>;
 
 /**
- * Login form (demo, same layout as signup). Validates with the shared Zod
- * schema and finds the account by email (any capitals). Passwords are never
- * stored in this demo, so the password is not checked and no session is
- * created; real sign-in comes when accounts move to the server.
+ * Login form (spec 013, same layout as signup). The server action checks the
+ * password, applies the rate limit, starts a session and redirects to `next`
+ * (checked again on the server). Wrong email or password: one generic message.
  */
-export default function LoginForm() {
-  const router = useRouter();
+export default function LoginForm({ next }: { next?: string }) {
   const [values, setValues] = useState<LoginInput>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "checking" | "done">("idle");
-  const [name, setName] = useState("");
+  const [status, setStatus] = useState<"idle" | "checking">("idle");
   const fields = useRef(new Map<LoginField, HTMLInputElement>());
   // Blocks repeat submits at once (state only updates on the next render).
   const busy = useRef(false);
-
-  useEffect(() => {
-    if (status !== "done") return;
-    const timer = setTimeout(() => router.push("/"), REDIRECT_MS);
-    return () => clearTimeout(timer);
-  }, [status, router]);
 
   const register = (field: LoginField) => (el: HTMLInputElement | null) => {
     if (el) fields.current.set(field, el);
@@ -63,7 +50,7 @@ export default function LoginForm() {
     if (first) fields.current.get(first)?.focus();
   };
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (busy.current) return; // no double submission
     setFormError(null);
@@ -76,18 +63,22 @@ export default function LoginForm() {
 
     busy.current = true;
     setStatus("checking");
-    const user = findUserByEmail(parsed.data.email);
-    if (user === "storage" || user === null) {
-      busy.current = false;
-      setStatus("idle");
-      if (user === "storage") setFormError("Could not log in from this browser");
-      else showErrors({ email: "No account found with this email" });
-      return;
+    // On success the server redirects and this never returns.
+    let result: Awaited<ReturnType<typeof login>> | undefined;
+    try {
+      result = await login(parsed.data, next);
+    } catch {
+      result = { formError: "Could not log in. Check your connection and try again." };
     }
-    setName(user.name);
-    setValues(EMPTY); // drop the password from memory
-    setErrors({});
-    setStatus("done");
+    if (!result) return; // redirecting: keep the button disabled until the next page loads
+    busy.current = false;
+    setStatus("idle");
+    setValues((v) => ({ ...v, password: "" })); // never keep a rejected password around
+    if (result.errors) showErrors(result.errors);
+    if (result.formError) {
+      setFormError(result.formError);
+      fields.current.get("password")?.focus();
+    }
   };
 
   const errorCount = Object.keys(errors).length;
@@ -129,21 +120,13 @@ export default function LoginForm() {
             {formError}
           </p>
         )}
-        <p role="status" className={status === "done" ? "flex items-start gap-2 rounded-md bg-success-bg px-3 py-2 text-sm text-success" : "sr-only"}>
-          {status === "done" && (
-            <>
-              <CircleCheck aria-hidden className="mt-0.5 size-4 shrink-0" />
-              Welcome back, {name}. Taking you to the home page… (Demo: you stay signed out until accounts are live.)
-            </>
-          )}
-        </p>
 
         <button
           type="submit"
           disabled={status !== "idle"}
           className={`inline-flex h-12 w-full items-center justify-center rounded-pill bg-brand-950 text-base font-semibold text-surface hover:bg-brand-900 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`}
         >
-          {status === "checking" ? "Logging in…" : status === "done" ? "Logged in" : "Log in"}
+          {status === "checking" ? "Logging in…" : "Log in"}
         </button>
       </form>
 

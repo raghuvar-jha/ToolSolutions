@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CircleAlert } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import { signupSchema, type SignupField, type SignupInput } from "@repo/shared/auth";
 import { fieldErrors } from "@repo/shared/checkout";
-import { saveUser } from "../../lib/auth/users-storage";
+import { signup } from "../../lib/auth/actions";
 import GoogleButton from "./google-button";
 import PasswordField from "./password-field";
 import TextField from "./text-field";
@@ -18,31 +17,21 @@ const FIELD_ORDER: SignupField[] = ["name", "email", "password", "confirmPasswor
 
 const EMPTY: SignupInput = { name: "", email: "", password: "", confirmPassword: "" };
 
-/** Wait before leaving the page after a successful signup. */
-const REDIRECT_MS = 1000;
-
 type Errors = Partial<Record<SignupField, string>>;
 
 /**
- * Signup form (spec 010, demo): validates with the shared Zod schema, rejects
- * an email that is already saved (any capitals), saves name + email only, then
- * goes to the home page. The password is checked but never stored.
+ * Signup form (specs 010 and 013): validates with the shared Zod schema here and
+ * again on the server. The server action creates the account (argon2id hash),
+ * starts a session and redirects to /account.
  */
 export default function SignupForm() {
-  const router = useRouter();
   const [values, setValues] = useState<SignupInput>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "saving" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "saving">("idle");
   const fields = useRef(new Map<SignupField, HTMLInputElement>());
   // Blocks repeat submits at once (state only updates on the next render).
   const busy = useRef(false);
-
-  useEffect(() => {
-    if (status !== "done") return;
-    const timer = setTimeout(() => router.push("/"), REDIRECT_MS);
-    return () => clearTimeout(timer);
-  }, [status, router]);
 
   const register = (name: SignupField) => (el: HTMLInputElement | null) => {
     if (el) fields.current.set(name, el);
@@ -61,7 +50,7 @@ export default function SignupForm() {
     if (first) fields.current.get(first)?.focus();
   };
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (busy.current) return; // no double submission
     setFormError(null);
@@ -74,21 +63,18 @@ export default function SignupForm() {
 
     busy.current = true;
     setStatus("saving");
-    // Only name and email are passed on; the password goes no further than this check.
-    const result = saveUser({ name: parsed.data.name, email: parsed.data.email });
-    if (!result.ok) {
-      busy.current = false;
-      setStatus("idle");
-      if (result.reason === "duplicate") {
-        showErrors({ email: "An account with this email already exists" });
-      } else {
-        setFormError("Could not create account in this browser");
-      }
-      return;
+    // On success the server redirects to /account and this never returns.
+    let result: Awaited<ReturnType<typeof signup>> | undefined;
+    try {
+      result = await signup(parsed.data);
+    } catch {
+      result = { formError: "Could not create your account. Check your connection and try again." };
     }
-    setValues(EMPTY); // drop the password from memory too
-    setErrors({});
-    setStatus("done");
+    if (!result) return; // redirecting: keep the button disabled until the next page loads
+    busy.current = false;
+    setStatus("idle");
+    if (result.errors) showErrors(result.errors);
+    if (result.formError) setFormError(result.formError);
   };
 
   const errorCount = Object.keys(errors).length;
@@ -134,7 +120,15 @@ export default function SignupForm() {
           onChange={update("password")}
           inputRef={register("password")}
         />
-        
+        <PasswordField
+          id="confirmPassword"
+          label="Confirm password"
+          autoComplete="new-password"
+          value={values.confirmPassword}
+          error={errors.confirmPassword}
+          onChange={update("confirmPassword")}
+          inputRef={register("confirmPassword")}
+        />
 
         {formError && (
           <p role="alert" className="flex items-start gap-2 rounded-md border border-brand-950 bg-brand-50 px-3 py-2 text-sm text-text">
@@ -142,21 +136,13 @@ export default function SignupForm() {
             {formError}
           </p>
         )}
-        <p role="status" className={status === "done" ? "flex items-center gap-2 rounded-md bg-success-bg px-3 py-2 text-sm text-success" : "sr-only"}>
-          {status === "done" && (
-            <>
-              <CircleCheck aria-hidden className="size-4 shrink-0" />
-              Account created. Taking you to the home page…
-            </>
-          )}
-        </p>
 
         <button
           type="submit"
           disabled={status !== "idle"}
           className={`inline-flex h-12 w-full items-center justify-center rounded-pill bg-brand-950 text-base font-semibold text-surface hover:bg-brand-900 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`}
         >
-          {status === "saving" ? "Creating account…" : status === "done" ? "Account created" : "Create account"}
+          {status === "saving" ? "Creating account…" : "Create account"}
         </button>
       </form>
 

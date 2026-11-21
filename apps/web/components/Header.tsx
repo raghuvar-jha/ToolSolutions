@@ -4,10 +4,11 @@ import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import {
   Heart,
   LocateFixed,
+  LogOut,
   MapPin,
   Phone,
   Search,
@@ -22,6 +23,7 @@ import CountBadge from "./count-badge";
 import { useCart } from "../lib/cart/cart-context";
 import { CATEGORIES, categoryHref } from "../lib/categories";
 import { useSaved } from "../lib/saved/saved-context";
+import { useSessionUser } from "../lib/auth/user-context";
 
 /*
  * Site header. Layout: DESIGN.md §5 "Header" (desktop, per Navbar.png)
@@ -197,6 +199,87 @@ function ActionContent({
   );
 }
 
+/** /login?next=<this page>, so logging in comes back here (not from the auth pages themselves). */
+function useLoginHref() {
+  const pathname = usePathname();
+  return pathname && !["/login", "/signup"].includes(pathname)
+    ? `/login?next=${encodeURIComponent(pathname)}`
+    : "/login";
+}
+
+/** POST /logout (spec 013). A form, so it works without JavaScript and can't be triggered by a link. */
+function LogoutButton({ className, children, label }: { className: string; children: ReactNode; label?: string }) {
+  return (
+    <form action="/logout" method="post" className="inline">
+      <button type="submit" aria-label={label} className={className}>
+        {children}
+      </button>
+    </form>
+  );
+}
+
+/** Desktop account block: Login / Register, or the first name and Logout (spec 013). */
+function AccountAction() {
+  const user = useSessionUser();
+  const loginHref = useLoginHref();
+  const link = `rounded-sm hover:text-brand-100 ${FOCUS_ON_DARK}`;
+  return (
+    <div className="flex items-center gap-3.5">
+      <User aria-hidden strokeWidth={1.75} className="size-6 shrink-0" />
+      <span className="leading-tight">
+        <span className="block text-xs text-brand-200">Account</span>
+        <span className="flex items-baseline gap-1.5 text-base whitespace-nowrap">
+          {user ? (
+            <>
+              <Link href="/account" className={`max-w-32 truncate ${link}`}>
+                {user.firstName}
+              </Link>
+              <span aria-hidden className="text-brand-200">/</span>
+              <LogoutButton className={`cursor-pointer ${link}`}>Logout</LogoutButton>
+            </>
+          ) : (
+            <>
+              <Link href={loginHref} className={link}>
+                Login
+              </Link>
+              <span aria-hidden className="text-brand-200">/</span>
+              <Link href="/signup" className={link}>
+                Register
+              </Link>
+            </>
+          )}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** Mobile top bar: Login, or the first name and a Logout icon button (spec 013). */
+function MobileAccount() {
+  const user = useSessionUser();
+  const loginHref = useLoginHref();
+  const link = `flex shrink-0 items-center gap-1.5 rounded-md text-sm text-surface ${FOCUS_ON_DARK}`;
+  if (!user) {
+    return (
+      <Link href={loginHref} className={link}>
+        <User aria-hidden className="size-4 text-footer-icon" />
+        Login
+      </Link>
+    );
+  }
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <Link href="/account" className={`${link} min-w-0`}>
+        <User aria-hidden className="size-4 shrink-0 text-footer-icon" />
+        <span className="max-w-20 truncate">{user.firstName}</span>
+      </Link>
+      <LogoutButton label="Logout" className={`grid size-8 cursor-pointer place-items-center rounded-md text-surface ${FOCUS_ON_DARK}`}>
+        <LogOut aria-hidden className="size-4" />
+      </LogoutButton>
+    </span>
+  );
+}
+
 /** Cart link label; the count is hidden while the cart is empty (or still loading). */
 const cartLabel = (n: number) => (n > 0 ? itemsLabel(n) : "empty");
 
@@ -217,14 +300,7 @@ function HeaderActions() {
           badge={{ count: savedCount, loaded: savedLoaded }}
         />
       </Link>
-      {/* Goes to signup until login exists (spec 010). */}
-      <Link
-        href="/signup"
-        aria-label="Account, sign in"
-        className={`flex items-center gap-3.5 rounded-md hover:text-brand-100 ${FOCUS_ON_DARK}`}
-      >
-        <ActionContent icon={User} caption="Account" value="Sign in" />
-      </Link>
+      <AccountAction />
       <Link
         href="/cart"
         aria-label={`MY CART, ${cartLabel(itemCount)}`}
@@ -421,13 +497,16 @@ export function SiteHeader() {
         <div className="bg-brand-950">
           <div className={`${CONTAINER} flex h-12 items-center justify-between gap-3`}>
             <Logo className="h-11" />
-            <Link
-              href={ORDER_NOW_HREF}
-              className={`flex shrink-0 items-center gap-1.5 rounded-md text-sm font-semibold text-surface uppercase ${FOCUS_ON_DARK}`}
-            >
-              <Phone aria-hidden className="size-4 text-footer-icon" />
-              Order now
-            </Link>
+            <div className="flex min-w-0 items-center gap-3">
+              <MobileAccount />
+              <Link
+                href={ORDER_NOW_HREF}
+                className={`flex shrink-0 items-center gap-1.5 rounded-md text-sm font-semibold text-surface uppercase ${FOCUS_ON_DARK}`}
+              >
+                <Phone aria-hidden className="size-4 text-footer-icon" />
+                Order now
+              </Link>
+            </div>
           </div>
         </div>
 
