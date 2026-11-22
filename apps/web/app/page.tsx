@@ -4,6 +4,7 @@ import ProductSections from "../components/Products";
 import Footer from "../components/footer";
 import ProductGrid from "../components/product-grid";
 import CertificatesSection from "../components/certificates-section";
+import PartnersSection from "../components/partners-section";
 import { getBestSellers, getProductSummaries } from "../lib/catalog/product-repository";
 
 const OUR_PRODUCTS_COUNT = 10;
@@ -25,6 +26,7 @@ export default async function Home() {
         <HeroCarousel />
         <ProductGrid title="BEST SELLER" products={bestSellers} />
         <ProductGrid title="OUR PRODUCTS" products={ourProducts} />
+        <PartnersSection />
 
         <CertificatesSection />
       </main>
